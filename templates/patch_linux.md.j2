@@ -1,0 +1,37 @@
+---
+title: {{ title }}
+id: {{ id }}
+category: {{ category }}
+region: {{ region }}
+playbooks:
+{% for pb in playbooks %}  - {{ pb }}
+{% endfor %}
+parameters:
+  patch_group: {{ patch_group | default('all') }}
+  maintenance_window: {{ maintenance_window | default('02:00-04:00') }}
+  reboot_required: {{ reboot_required | default(true) }}
+---
+
+# {{ title }}
+
+## Overview
+This MOP executes automated patching procedures for Linux systems in the {{ region }} region.
+
+## Target Systems
+- **Patch Group**: {{ patch_group | default('all') }}
+- **Region**: {{ region }}
+- **Maintenance Window**: {{ maintenance_window | default('02:00-04:00') }}
+
+## Pre-execution Checklist
+- [ ] Verify maintenance window approval
+- [ ] Confirm backup completion
+- [ ] Check system load and availability
+- [ ] Notify stakeholders of maintenance
+
+## Execution Steps
+
+### 1. Pre-patch Validation
+```bash
+# Verify system status
+ansible {{ region }}-linux-{{ patch_group | default('all') }} -m ping
+ansible {{ region }}-linux-{{ patch_group | default('all') }} -m setup -a "filter=ansible_uptime_seconds"

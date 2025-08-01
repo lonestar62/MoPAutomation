@@ -1,0 +1,149 @@
+---
+- name: Commit Configuration Changes to Git
+  hosts: localhost
+  gather_facts: yes
+  
+  vars:
+    git_repo_path: "{{ git_repo_path | default('.') }}"
+    git_branch: "{{ git_branch | default('main') }}"
+    commit_message: "{{ commit_message | default('Update configuration via MOP automation') }}"
+    git_user_name: "{{ git_user_name | default('MOP Automation') }}"
+    git_user_email: "{{ git_user_email | default('mop-automation@company.com') }}"
+    
+  tasks:
+    - name: Display Git operation information
+      debug:
+        msg: |
+          Git Repository: {{ git_repo_path }}
+          Target Branch: {{ git_branch }}
+          Commit Message: {{ commit_message }}
+          
+    - name: Check if directory is a Git repository
+      stat:
+        path: "{{ git_repo_path }}/.git"
+      register: git_repo_check
+      
+    - name: Fail if not a Git repository
+      fail:
+        msg: "Directory {{ git_repo_path }} is not a Git repository"
+      when: not git_repo_check.stat.exists
+      
+    - name: Configure Git user name
+      git_config:
+        name: user.name
+        value: "{{ git_user_name }}"
+        scope: local
+        repo: "{{ git_repo_path }}"
+        
+    - name: Configure Git user email
+      git_config:
+        name: user.email
+        value: "{{ git_user_email }}"
+        scope: local
+        repo: "{{ git_repo_path }}"
+        
+    - name: Check Git status
+      command: git status --porcelain
+      args:
+        chdir: "{{ git_repo_path }}"
+      register: git_status
+      changed_when: false
+      
+    - name: Display current Git status
+      debug:
+        msg: |
+          Git Status:
+          {{ git_status.stdout if git_status.stdout else 'Working directory clean' }}
+          
+    - name: Check if there are changes to commit
+      set_fact:
+        has_changes: "{{ git_status.stdout | length > 0 }}"
+        
+    - name: Add all changes to Git staging
+      command: git add .
+      args:
+        chdir: "{{ git_repo_path }}"
+      when: has_changes
+      
+    - name: Create commit with changes
+      command: |
+        git commit -m "{{ commit_message }}"
+      args:
+        chdir: "{{ git_repo_path }}"
+      register: git_commit_result
+      when: has_changes
+      
+    - name: Display commit information
+      debug:
+        msg: |
+          Commit Status: {{ 'Created' if has_changes else 'No changes to commit' }}
+          {% if has_changes and git_commit_result is defined %}
+          Commit Output: {{ git_commit_result.stdout }}
+          {% endif %}
+          
+    - name: Get current branch
+      command: git branch --show-current
+      args:
+        chdir: "{{ git_repo_path }}"
+      register: current_branch
+      changed_when: false
+      
+    - name: Switch to target branch if different
+      command: git checkout {{ git_branch }}
+      args:
+        chdir: "{{ git_repo_path }}"
+      when: 
+        - current_branch.stdout != git_branch
+        - has_changes
+      register: branch_switch
+      
+    - name: Push changes to remote repository
+      command: git push origin {{ git_branch }}
+      args:
+        chdir: "{{ git_repo_path }}"
+      register: git_push_result
+      when: has_changes
+      ignore_errors: yes
+      
+    - name: Handle push results
+      debug:
+        msg: |
+          Push Status: {{ 'SUCCESS' if git_push_result is succeeded else 'FAILED' }}
+          {% if git_push_result is defined %}
+          Push Output: {{ git_push_result.stdout | default('') }}
+          {% if git_push_result is failed %}
+          Push Error: {{ git_push_result.stderr | default('') }}
+          {% endif %}
+          {% endif %}
+          
+    - name: Create Git operation summary
+      copy:
+        content: |
+          Git Operation Summary
+          ====================
+          Repository: {{ git_repo_path }}
+          Branch: {{ git_branch }}
+          Date: {{ ansible_date_time.iso8601 }}
+          
+          Operation Results:
+          - Changes Detected: {{ has_changes }}
+          {% if has_changes %}
+          - Commit Created: {{ git_commit_result is succeeded }}
+          - Push Status: {{ 'SUCCESS' if git_push_result is succeeded else 'FAILED' }}
+          {% if git_commit_result is defined %}
+          - Commit Hash: {{ git_commit_result.stdout | regex_search('\[.*\]') | default('N/A') }}
+          {% endif %}
+          {% endif %}
+          
+          Modified Files:
+          {{ git_status.stdout if git_status.stdout else 'No files modified' }}
+        dest: "/tmp/git-operation-{{ ansible_date_time.epoch }}.log"
+        mode: '0644'
+        
+    - name: Fail if push failed
+      fail:
+        msg: "Git push failed: {{ git_push_result.stderr | default('Unknown error') }}"
+      when: 
+        - has_changes
+        - git_push_result is defined
+        - git_push_result is failed

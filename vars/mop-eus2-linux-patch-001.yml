@@ -1,0 +1,11 @@
+id: mop-eus2-linux-patch-001
+title: "Patch Critical Linux VMs - East US 2"
+category: patch-linux
+region: eastus2
+patch_group: critical
+maintenance_window: "02:00-04:00"
+reboot_required: true
+execution_time: "45-60"
+impact_level: "High"
+approval_reference: "CHG-2024-001234"
+technical_contact: "Linux Operations Team"

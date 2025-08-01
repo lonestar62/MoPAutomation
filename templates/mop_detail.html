@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}{{ mop.variables.title }} - MOP Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('list_mops') }}">MOPs</a></li>
+                <li class="breadcrumb-item active">{{ mop.id }}</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>{{ mop.variables.title }}</h1>
+                <p class="text-muted mb-0">{{ mop.id }}</p>
+            </div>
+            <div>
+                <form method="POST" action="{{ url_for('execute_mop', mop_id=mop.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-success me-2" onclick="return confirm('Are you sure you want to execute this MOP?')">
+                        <i class="fas fa-play me-2"></i>Execute MOP
+                    </button>
+                </form>
+                <a href="{{ url_for('edit_variables', mop_id=mop.id) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-edit me-2"></i>Edit Variables
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Rendered MOP Content -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Rendered MOP Content
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="markdown-content">
+                    <pre class="bg-dark p-3 rounded"><code>{{ mop.rendered_content }}</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Execution History -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Execution History
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if history %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Execution ID</th>
+                                    <th>Timestamp</th>
+                                    <th>Status</th>
+                                    <th>Playbooks</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for exec in history %}
+                                    <tr>
+                                        <td><code>{{ exec.execution_id }}</code></td>
+                                        <td>
+                                            {% if exec.timestamp %}
+                                                {{ exec.timestamp[:19].replace('T', ' ') }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if exec.success else 'danger' }}">
+                                                {% if exec.success %}
+                                                    <i class="fas fa-check"></i> Success
+                                                {% else %}
+                                                    <i class="fas fa-times"></i> Failed
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if exec.playbooks %}
+                                                {% for playbook in exec.playbooks %}
+                                                    <span class="badge bg-secondary">{{ playbook }}</span>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    onclick="showExecutionDetails('{{ exec.execution_id }}', {{ exec|tojson|safe }})">
+                                                <i class="fas fa-eye"></i> Details
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No execution history</p>
+                        <small class="text-muted">Execute this MOP to see history here</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- MOP Metadata -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    MOP Metadata
+                </h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">ID:</dt>
+                    <dd class="col-sm-8"><code>{{ mop.id }}</code></dd>
+                    
+                    <dt class="col-sm-4">Title:</dt>
+                    <dd class="col-sm-8">{{ mop.variables.title }}</dd>
+                    
+                    <dt class="col-sm-4">Category:</dt>
+                    <dd class="col-sm-8"><span class="badge bg-primary">{{ mop.variables.category }}</span></dd>
+                    
+                    <dt class="col-sm-4">Region:</dt>
+                    <dd class="col-sm-8">{{ mop.variables.region }}</dd>
+                    
+                    <dt class="col-sm-4">Template:</dt>
+                    <dd class="col-sm-8">
+                        <code>{{ mop.template }}</code>
+                        <a href="{{ url_for('edit_template', template_name=mop.template) }}" 
+                           class="btn btn-sm btn-outline-secondary ms-2">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+        
+        <!-- Associated Playbooks -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-play me-2"></i>
+                    Associated Playbooks
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if mop.playbooks %}
+                    <ul class="list-group list-group-flush">
+                        {% for playbook in mop.playbooks %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <code>{{ playbook }}</code>
+                                <span class="badge bg-secondary">Ansible</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No playbooks associated with this category.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Variables -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-code me-2"></i>
+                    Variables
+                </h5>
+            </div>
+            <div class="card-body">
+                <pre class="bg-dark p-3 rounded small"><code>{{ mop.variables|tojson(indent=2) }}</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Execution Details Modal -->
+<div class="modal fade" id="executionDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Execution Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="executionDetailsContent">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showExecutionDetails(executionId, execData) {
+    const modal = new bootstrap.Modal(document.getElementById('executionDetailsModal'));
+    const content = document.getElementById('executionDetailsContent');
+    
+    let html = `
+        <h6>Execution: ${executionId}</h6>
+        <dl class="row">
+            <dt class="col-sm-3">Status:</dt>
+            <dd class="col-sm-9">
+                <span class="badge bg-${execData.success ? 'success' : 'danger'}">
+                    ${execData.success ? 'Success' : 'Failed'}
+                </span>
+            </dd>
+            
+            <dt class="col-sm-3">Timestamp:</dt>
+            <dd class="col-sm-9">${execData.timestamp ? execData.timestamp.replace('T', ' ') : 'N/A'}</dd>
+            
+            <dt class="col-sm-3">Category:</dt>
+            <dd class="col-sm-9">${execData.category || 'N/A'}</dd>
+        </dl>
+    `;
+    
+    if (execData.results && execData.results.length > 0) {
+        html += '<h6>Playbook Results:</h6>';
+        execData.results.forEach(result => {
+            html += `
+                <div class="card mb-2">
+                    <div class="card-header d-flex justify-content-between">
+                        <span><strong>${result.playbook}</strong></span>
+                        <span class="badge bg-${result.success ? 'success' : 'danger'}">
+                            ${result.success ? 'Success' : 'Failed'}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <small>
+                            <strong>Duration:</strong> ${result.duration_seconds}s<br>
+                            <strong>Return Code:</strong> ${result.return_code}<br>
+                        </small>
+                        <details class="mt-2">
+                            <summary>Output</summary>
+                            <pre class="bg-dark text-light p-2 rounded mt-2 small">${result.output}</pre>
+                        </details>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    if (execData.error) {
+        html += `
+            <div class="alert alert-danger">
+                <strong>Error:</strong> ${execData.error}
+            </div>
+        `;
+    }
+    
+    content.innerHTML = html;
+    modal.show();
+}
+</script>
+{% endblock %}

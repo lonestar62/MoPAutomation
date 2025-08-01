@@ -1,0 +1,44 @@
+---
+title: {{ title }}
+id: {{ id }}
+category: {{ category }}
+region: {{ region }}
+playbooks:
+{% for pb in playbooks %}  - {{ pb }}
+{% endfor %}
+parameters:
+  agent_version: {{ agent_version | default('latest') }}
+  target_systems: {{ target_systems | default('all') }}
+  rollback_enabled: {{ rollback_enabled | default(true) }}
+---
+
+# {{ title }}
+
+## Overview
+This MOP performs automated agent upgrades across systems in the {{ region }} region using GitOps workflow and Azure DevOps integration.
+
+## Target Configuration
+- **Agent Version**: {{ agent_version | default('latest') }}
+- **Target Systems**: {{ target_systems | default('all') }}
+- **Region**: {{ region }}
+- **Rollback Enabled**: {{ rollback_enabled | default(true) }}
+
+## Pre-execution Checklist
+- [ ] Verify agent compatibility matrix
+- [ ] Confirm change approval
+- [ ] Check system prerequisites
+- [ ] Validate Git repository access
+- [ ] Verify Azure DevOps pipeline permissions
+
+## Execution Workflow
+
+### 1. Configuration Update
+```yaml
+# Updated configuration will be applied to:
+# {{ config_file | default('config/agents.yml') }}
+
+agent_config:
+  version: {{ agent_version | default('latest') }}
+  region: {{ region }}
+  targets: {{ target_systems | default('all') }}
+  upgrade_strategy: {{ upgrade_strategy | default('rolling') }}

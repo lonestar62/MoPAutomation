@@ -1,0 +1,14 @@
+id: mop-wus2-agent-upgrade-001
+title: "Upgrade Monitoring Agents - West US 2"
+category: agent-upgrade
+region: westus2
+agent_version: "v2.1.5"
+target_systems: "monitoring-agents"
+rollback_enabled: true
+upgrade_strategy: "rolling"
+config_file: "config/monitoring-agents.yml"
+git_branch: "main"
+pipeline_duration: "20-35"
+change_ticket: "CHG-2024-001235"
+approval_reference: "Approved via ServiceNow"
+technical_contact: "Monitoring Team"

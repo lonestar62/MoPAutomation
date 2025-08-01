@@ -1,0 +1,137 @@
+---
+- name: Edit YAML Configuration Files
+  hosts: localhost
+  gather_facts: yes
+  
+  vars:
+    config_file: "{{ config_file | default('config/default.yml') }}"
+    backup_dir: "/tmp/config-backups"
+    
+  tasks:
+    - name: Display configuration update information
+      debug:
+        msg: |
+          Updating configuration file: {{ config_file }}
+          Target region: {{ region }}
+          Backup directory: {{ backup_dir }}
+    
+    - name: Create backup directory
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0755'
+        
+    - name: Check if configuration file exists
+      stat:
+        path: "{{ config_file }}"
+      register: config_file_stat
+      
+    - name: Create configuration file if it doesn't exist
+      file:
+        path: "{{ config_file }}"
+        state: touch
+        mode: '0644'
+      when: not config_file_stat.stat.exists
+      
+    - name: Backup existing configuration
+      copy:
+        src: "{{ config_file }}"
+        dest: "{{ backup_dir }}/{{ config_file | basename }}.{{ ansible_date_time.epoch }}"
+        backup: yes
+      when: config_file_stat.stat.exists
+      
+    - name: Read current configuration
+      slurp:
+        src: "{{ config_file }}"
+      register: current_config
+      when: config_file_stat.stat.exists
+      
+    - name: Parse current YAML configuration
+      set_fact:
+        current_yaml: "{{ current_config.content | b64decode | from_yaml }}"
+      when: 
+        - config_file_stat.stat.exists
+        - current_config.content | length > 0
+      ignore_errors: yes
+      
+    - name: Initialize empty config if parsing failed
+      set_fact:
+        current_yaml: {}
+      when: current_yaml is not defined
+      
+    - name: Update configuration with new values
+      set_fact:
+        updated_config: |
+          {% set config = current_yaml | default({}) %}
+          {% if agent_version is defined %}
+          {% set _ = config.update({'agent_version': agent_version}) %}
+          {% endif %}
+          {% if target_systems is defined %}
+          {% set _ = config.update({'target_systems': target_systems}) %}
+          {% endif %}
+          {% if region is defined %}
+          {% set _ = config.update({'region': region}) %}
+          {% endif %}
+          {% if upgrade_strategy is defined %}
+          {% set _ = config.update({'upgrade_strategy': upgrade_strategy}) %}
+          {% endif %}
+          {% set _ = config.update({'last_updated': ansible_date_time.iso8601}) %}
+          {% set _ = config.update({'updated_by': 'mop-ansible-renderer'}) %}
+          {{ config }}
+          
+    - name: Write updated configuration
+      copy:
+        content: "{{ updated_config | to_nice_yaml }}"
+        dest: "{{ config_file }}"
+        mode: '0644'
+        backup: yes
+      register: config_update_result
+      
+    - name: Validate YAML syntax
+      include_vars:
+        file: "{{ config_file }}"
+      register: yaml_validation
+      ignore_errors: yes
+      
+    - name: Report validation results
+      debug:
+        msg: |
+          Configuration update completed
+          File: {{ config_file }}
+          Validation: {{ 'PASSED' if yaml_validation is succeeded else 'FAILED' }}
+          Backup created: {{ config_update_result.backup_file | default('N/A') }}
+          
+    - name: Fail if YAML validation failed
+      fail:
+        msg: "YAML validation failed for {{ config_file }}"
+      when: yaml_validation is failed
+      
+    - name: Display updated configuration
+      debug:
+        msg: "{{ updated_config | from_yaml }}"
+        
+    - name: Create update summary
+      copy:
+        content: |
+          Configuration Update Summary
+          ===========================
+          File: {{ config_file }}
+          Date: {{ ansible_date_time.iso8601 }}
+          Status: {{ 'SUCCESS' if yaml_validation is succeeded else 'FAILED' }}
+          Backup: {{ config_update_result.backup_file | default('N/A') }}
+          
+          Updated Values:
+          {% if agent_version is defined %}
+          - agent_version: {{ agent_version }}
+          {% endif %}
+          {% if target_systems is defined %}
+          - target_systems: {{ target_systems }}
+          {% endif %}
+          {% if region is defined %}
+          - region: {{ region }}
+          {% endif %}
+          {% if upgrade_strategy is defined %}
+          - upgrade_strategy: {{ upgrade_strategy }}
+          {% endif %}
+        dest: "{{ backup_dir }}/update-summary-{{ ansible_date_time.epoch }}.txt"
+        mode: '0644'

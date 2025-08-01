@@ -1,0 +1,15 @@
+id: mop-cus-pipeline-001
+title: "Deploy Infrastructure Updates - Central US"
+category: pipeline-only
+region: centralus
+pipeline_name: "infrastructure-deployment"
+pipeline_parameters:
+  environment: "production"
+  deployment_type: "incremental"
+  validate_only: false
+wait_for_completion: true
+estimated_duration: "15-25"
+devops_url: "https://dev.azure.com/company/infrastructure"
+change_reference: "CHG-2024-001236"
+business_justification: "Security updates and compliance requirements"
+risk_level: "Medium"

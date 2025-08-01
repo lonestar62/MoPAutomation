@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Variables - {{ mop_id }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('list_mops') }}">MOPs</a></li>
+                <li class="breadcrumb-item active">Edit Variables</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-edit me-2"></i>
+                Edit Variables: {{ mop_id }}
+            </h1>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <form method="POST" action="{{ url_for('save_variables', mop_id=mop_id) }}">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-code me-2"></i>
+                        Variables (YAML)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="content" class="form-label">YAML Configuration</label>
+                        <textarea id="content" name="content" class="form-control" rows="20">{{ content }}</textarea>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('mop_detail', mop_id=mop_id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Variables
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Variable Guidelines
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>Required Fields:</h6>
+                <ul>
+                    <li><code>id</code> - Unique MOP identifier</li>
+                    <li><code>title</code> - Human-readable title</li>
+                    <li><code>category</code> - MOP category for playbook mapping</li>
+                    <li><code>region</code> - Target region</li>
+                </ul>
+                
+                <h6 class="mt-3">Available Categories:</h6>
+                <ul>
+                    <li><code>patch-linux</code> - Linux patching operations</li>
+                    <li><code>agent-upgrade</code> - Agent upgrade procedures</li>
+                    <li><code>pipeline-only</code> - DevOps pipeline triggers</li>
+                    <li><code>git-ops</code> - Git-based operations</li>
+                    <li><code>infrastructure</code> - Infrastructure changes</li>
+                </ul>
+                
+                <h6 class="mt-3">Example:</h6>
+                <pre class="bg-dark p-2 rounded small"><code>id: mop-eus2-patch-001
+title: "Patch Critical Servers"
+category: patch-linux
+region: eastus2
+patch_group: critical
+maintenance_window: "02:00-04:00"</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize CodeMirror for YAML editing
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('content');
+    const editor = CodeMirror.fromTextArea(textarea, {
+        mode: 'yaml',
+        theme: 'monokai',
+        lineNumbers: true,
+        lineWrapping: true,
+        indentUnit: 2,
+        tabSize: 2,
+        autoCloseBrackets: true,
+        matchBrackets: true,
+        extraKeys: {
+            "Ctrl-Space": "autocomplete"
+        }
+    });
+    
+    // Set editor height
+    editor.setSize(null, 500);
+    
+    // Real-time YAML validation
+    editor.on('change', function() {
+        const content = editor.getValue();
+        try {
+            // Basic YAML syntax check (simple validation)
+            if (content.trim()) {
+                // Check for common YAML syntax issues
+                const lines = content.split('\n');
+                let hasError = false;
+                
+                lines.forEach((line, index) => {
+                    if (line.trim() && !line.startsWith('#')) {
+                        // Check for improper indentation or missing colons
+                        if (line.includes(':') && !line.trim().endsWith(':')) {
+                            const parts = line.split(':');
+                            if (parts.length >= 2 && parts[1].trim() === '') {
+                                // Line ends with colon, probably fine
+                            }
+                        }
+                    }
+                });
+                
+                // Clear any error styling
+                editor.getWrapperElement().style.borderColor = '';
+            }
+        } catch (e) {
+            // Add error styling
+            editor.getWrapperElement().style.borderColor = '#dc3545';
+        }
+    });
+});
+</script>
+{% endblock %}

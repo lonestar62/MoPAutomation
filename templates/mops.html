@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}MOPs - MOP Ansible Renderer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-file-alt me-2"></i>
+                Operational Procedures (MOPs)
+            </h1>
+        </div>
+        
+        {% if error %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ error }}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if mops %}
+    <div class="row">
+        {% for mop in mops %}
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">{{ mop.title }}</h6>
+                        <span class="badge bg-primary">{{ mop.category }}</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <small class="text-muted">
+                                <i class="fas fa-tag me-1"></i>ID: {{ mop.id }}<br>
+                                <i class="fas fa-map-marker-alt me-1"></i>Region: {{ mop.region }}<br>
+                                <i class="fas fa-file me-1"></i>Variables: {{ mop.variables_file }}
+                            </small>
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('edit_variables', mop_id=mop.id) }}" 
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-edit"></i> Edit Vars
+                            </a>
+                            <a href="{{ url_for('mop_detail', mop_id=mop.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">MOP Categories Summary</h5>
+                    <div class="row">
+                        {% set categories = mops|map(attribute='category')|unique|list %}
+                        {% for category in categories %}
+                            {% set category_count = mops|selectattr('category', 'equalto', category)|list|length %}
+                            <div class="col-md-3 mb-2">
+                                <span class="badge bg-secondary me-2">{{ category }}</span>
+                                <small class="text-muted">{{ category_count }} MOP{{ 's' if category_count != 1 else '' }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-folder-open fa-4x text-muted mb-4"></i>
+                    <h3 class="text-muted">No MOPs Found</h3>
+                    <p class="text-muted mb-4">
+                        Get started by adding YAML variable files to the <code>vars/</code> directory.
+                    </p>
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="alert alert-info text-start">
+                                <h6><i class="fas fa-info-circle me-2"></i>Quick Start:</h6>
+                                <ol class="mb-0">
+                                    <li>Create a YAML file in the <code>vars/</code> directory (e.g., <code>mop-example-001.yml</code>)</li>
+                                    <li>Include required fields: <code>id</code>, <code>title</code>, <code>category</code>, <code>region</code></li>
+                                    <li>Refresh this page to see your MOP appear</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

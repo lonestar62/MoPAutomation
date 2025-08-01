@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - MOP Ansible Renderer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            MOP Automation Dashboard
+        </h1>
+        
+        {% if error %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ error }}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <!-- MOPs Overview -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Available MOPs
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if mops %}
+                    <p class="text-muted mb-3">{{ mops|length }} MOPs available</p>
+                    <div class="list-group list-group-flush">
+                        {% for mop in mops[:5] %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ mop.title }}</h6>
+                                    <small class="text-muted">{{ mop.id }} • {{ mop.category }} • {{ mop.region }}</small>
+                                </div>
+                                <a href="{{ url_for('mop_detail', mop_id=mop.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if mops|length > 5 %}
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('list_mops') }}" class="btn btn-outline-secondary">
+                                View All MOPs ({{ mops|length }})
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No MOPs found</p>
+                        <small class="text-muted">Add YAML files to the vars/ directory to get started</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Executions -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Executions
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_executions %}
+                    <div class="list-group list-group-flush">
+                        {% for execution in recent_executions %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ execution.mop_id }}</h6>
+                                    <small class="text-muted">
+                                        {% if execution.timestamp %}
+                                            {{ execution.timestamp[:19].replace('T', ' ') }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <span class="badge bg-{{ 'success' if execution.success else 'danger' }}">
+                                    {% if execution.success %}
+                                        <i class="fas fa-check"></i> Success
+                                    {% else %}
+                                        <i class="fas fa-times"></i> Failed
+                                    {% endif %}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No executions yet</p>
+                        <small class="text-muted">Execute a MOP to see history here</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- System Overview -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    System Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <div class="card border-0">
+                            <div class="card-body">
+                                <i class="fas fa-file-alt fa-2x text-primary mb-2"></i>
+                                <h4>{{ mops|length }}</h4>
+                                <p class="text-muted">MOPs</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="card border-0">
+                            <div class="card-body">
+                                <i class="fas fa-play fa-2x text-success mb-2"></i>
+                                <h4>{{ recent_executions|length }}</h4>
+                                <p class="text-muted">Recent Runs</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="card border-0">
+                            <div class="card-body">
+                                <i class="fas fa-check fa-2x text-success mb-2"></i>
+                                <h4>{{ recent_executions|selectattr('success')|list|length }}</h4>
+                                <p class="text-muted">Successful</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="card border-0">
+                            <div class="card-body">
+                                <i class="fas fa-times fa-2x text-danger mb-2"></i>
+                                <h4>{{ (recent_executions|list|length) - (recent_executions|selectattr('success')|list|length) }}</h4>
+                                <p class="text-muted">Failed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Quick Actions</h6>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('list_mops') }}" class="btn btn-primary">
+                                <i class="fas fa-list me-2"></i>Browse MOPs
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Categories Available</h6>
+                        {% set categories = mops|map(attribute='category')|unique|list %}
+                        {% for category in categories %}
+                            <span class="badge bg-secondary me-1">{{ category }}</span>
+                        {% endfor %}
+                        {% if not categories %}
+                            <span class="text-muted">No categories found</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

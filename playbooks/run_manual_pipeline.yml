@@ -1,0 +1,205 @@
+---
+- name: Trigger Azure DevOps Pipeline
+  hosts: localhost
+  gather_facts: yes
+  
+  vars:
+    pipeline_name: "{{ pipeline_name | default('manual-deployment') }}"
+    devops_organization: "{{ devops_organization | default('company') }}"
+    devops_project: "{{ devops_project | default('infrastructure') }}"
+    wait_for_completion: "{{ wait_for_completion | default(true) }}"
+    pipeline_timeout: "{{ pipeline_timeout | default(1800) }}"  # 30 minutes
+    check_interval: "{{ check_interval | default(30) }}"  # 30 seconds
+    
+  tasks:
+    - name: Display pipeline trigger information
+      debug:
+        msg: |
+          Pipeline: {{ pipeline_name }}
+          Organization: {{ devops_organization }}
+          Project: {{ devops_project }}
+          Wait for Completion: {{ wait_for_completion }}
+          Region: {{ region | default('N/A') }}
+          
+    - name: Validate required pipeline parameters
+      assert:
+        that:
+          - pipeline_name is defined
+          - devops_organization is defined
+          - devops_project is defined
+        fail_msg: "Required pipeline parameters are missing"
+        
+    - name: Check Azure CLI availability
+      command: az --version
+      register: az_cli_check
+      failed_when: false
+      changed_when: false
+      
+    - name: Install Azure CLI if not available (simulation)
+      debug:
+        msg: "Azure CLI would be installed here in a real environment"
+      when: az_cli_check.rc != 0
+      
+    - name: Simulate Azure DevOps authentication check
+      debug:
+        msg: "Checking Azure DevOps authentication..."
+        
+    - name: Mock Azure DevOps login verification
+      set_fact:
+        auth_status: "authenticated"
+        
+    - name: Get pipeline ID (simulated)
+      set_fact:
+        pipeline_id: "{{ 999 | random(100) }}"
+        
+    - name: Display pipeline lookup results
+      debug:
+        msg: |
+          Pipeline ID: {{ pipeline_id }}
+          Pipeline Name: {{ pipeline_name }}
+          Status: Found
+          
+    - name: Prepare pipeline parameters
+      set_fact:
+        pipeline_params: |
+          {
+            "region": "{{ region | default('eastus2') }}",
+            "environment": "{{ environment | default('production') }}",
+            "triggered_by": "mop-automation",
+            "execution_time": "{{ ansible_date_time.iso8601 }}",
+            {% if pipeline_parameters is defined %}
+            {% for key, value in pipeline_parameters.items() %}
+            "{{ key }}": "{{ value }}",
+            {% endfor %}
+            {% endif %}
+            "mop_id": "{{ id | default('unknown') }}"
+          }
+          
+    - name: Display pipeline parameters
+      debug:
+        msg: "Pipeline Parameters: {{ pipeline_params | from_json }}"
+        
+    - name: Trigger pipeline execution (simulated)
+      uri:
+        url: "https://dev.azure.com/{{ devops_organization }}/{{ devops_project }}/_apis/pipelines/{{ pipeline_id }}/runs"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+          Authorization: "Bearer {{ azure_token | default('mock-token') }}"
+        body_format: json
+        body:
+          resources:
+            repositories:
+              self:
+                refName: "refs/heads/{{ git_branch | default('main') }}"
+          variables: "{{ pipeline_params | from_json }}"
+        status_code: [200, 201]
+      register: pipeline_trigger_result
+      failed_when: false
+      # This would normally make the actual API call
+      
+    - name: Mock successful pipeline trigger
+      set_fact:
+        pipeline_run_id: "{{ 9999 | random(1000) }}"
+        pipeline_trigger_success: true
+        
+    - name: Display pipeline trigger results
+      debug:
+        msg: |
+          Pipeline Trigger: {{ 'SUCCESS' if pipeline_trigger_success else 'FAILED' }}
+          Run ID: {{ pipeline_run_id }}
+          Pipeline: {{ pipeline_name }}
+          
+    - name: Monitor pipeline execution
+      block:
+        - name: Wait for pipeline completion
+          debug:
+            msg: "Monitoring pipeline execution... ({{ item }}/{{ (pipeline_timeout | int / check_interval | int) | int }})"
+          loop: "{{ range(1, (pipeline_timeout | int / check_interval | int) | int + 1) | list }}"
+          delay: "{{ check_interval }}"
+          when: 
+            - wait_for_completion | bool
+            - pipeline_trigger_success
+            
+        - name: Simulate pipeline status checks
+          set_fact:
+            pipeline_status: "{{ ['inProgress', 'inProgress', 'inProgress', 'completed'] | random }}"
+            pipeline_result: "{{ ['succeeded', 'succeeded', 'failed'] | random }}"
+          when: 
+            - wait_for_completion | bool
+            - pipeline_trigger_success
+            
+        - name: Mock final pipeline status
+          set_fact:
+            final_pipeline_status: "completed"
+            final_pipeline_result: "succeeded"
+          when:
+            - wait_for_completion | bool
+            - pipeline_trigger_success
+            
+      when: wait_for_completion | bool
+      
+    - name: Display pipeline execution results
+      debug:
+        msg: |
+          {% if wait_for_completion | bool %}
+          Pipeline Execution Complete
+          Status: {{ final_pipeline_status | default('triggered') }}
+          Result: {{ final_pipeline_result | default('pending') }}
+          {% else %}
+          Pipeline Triggered Successfully
+          Status: Asynchronous execution
+          Monitor: https://dev.azure.com/{{ devops_organization }}/{{ devops_project }}/_build/results?buildId={{ pipeline_run_id }}
+          {% endif %}
+          
+    - name: Create pipeline execution log
+      copy:
+        content: |
+          Azure DevOps Pipeline Execution Log
+          ===================================
+          Pipeline: {{ pipeline_name }}
+          Organization: {{ devops_organization }}
+          Project: {{ devops_project }}
+          Run ID: {{ pipeline_run_id }}
+          Triggered: {{ ansible_date_time.iso8601 }}
+          
+          Parameters:
+          {{ pipeline_params | from_json | to_nice_yaml }}
+          
+          Results:
+          - Trigger Status: {{ 'SUCCESS' if pipeline_trigger_success else 'FAILED' }}
+          {% if wait_for_completion | bool %}
+          - Execution Status: {{ final_pipeline_status | default('unknown') }}
+          - Execution Result: {{ final_pipeline_result | default('unknown') }}
+          {% else %}
+          - Execution Mode: Asynchronous
+          {% endif %}
+          
+          Links:
+          - Pipeline URL: https://dev.azure.com/{{ devops_organization }}/{{ devops_project }}/_build/results?buildId={{ pipeline_run_id }}
+          - Project URL: https://dev.azure.com/{{ devops_organization }}/{{ devops_project }}
+        dest: "/tmp/pipeline-execution-{{ ansible_date_time.epoch }}.log"
+        mode: '0644'
+        
+    - name: Set execution facts for reporting
+      set_fact:
+        pipeline_execution_summary:
+          pipeline_name: "{{ pipeline_name }}"
+          run_id: "{{ pipeline_run_id }}"
+          trigger_success: "{{ pipeline_trigger_success }}"
+          execution_status: "{{ final_pipeline_status | default('triggered') }}"
+          execution_result: "{{ final_pipeline_result | default('pending') }}"
+          wait_for_completion: "{{ wait_for_completion }}"
+          
+    - name: Fail if pipeline trigger failed
+      fail:
+        msg: "Failed to trigger pipeline {{ pipeline_name }}"
+      when: not pipeline_trigger_success
+      
+    - name: Fail if pipeline execution failed
+      fail:
+        msg: "Pipeline {{ pipeline_name }} execution failed: {{ final_pipeline_result }}"
+      when:
+        - wait_for_completion | bool
+        - final_pipeline_result is defined
+        - final_pipeline_result != 'succeeded'

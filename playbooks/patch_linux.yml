@@ -1,0 +1,111 @@
+---
+- name: Patch Linux Systems
+  hosts: "{{ region }}-linux-{{ patch_group | default('all') }}"
+  become: yes
+  gather_facts: yes
+  
+  vars:
+    patch_group: "{{ patch_group | default('all') }}"
+    maintenance_window: "{{ maintenance_window | default('02:00-04:00') }}"
+    reboot_required: "{{ reboot_required | default(true) }}"
+    
+  pre_tasks:
+    - name: Display patch information
+      debug:
+        msg: |
+          Starting patch process for {{ region }} region
+          Patch Group: {{ patch_group }}
+          Maintenance Window: {{ maintenance_window }}
+          Reboot Required: {{ reboot_required }}
+    
+    - name: Check system uptime
+      debug:
+        var: ansible_uptime_seconds
+        
+    - name: Create patch backup point
+      file:
+        path: /var/backup/pre-patch-{{ ansible_date_time.epoch }}
+        state: directory
+        mode: '0755'
+  
+  tasks:
+    - name: Update package cache (RedHat/CentOS)
+      yum:
+        update_cache: yes
+      when: ansible_os_family == "RedHat"
+      
+    - name: Update package cache (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+      
+    - name: Install security updates (RedHat/CentOS)
+      yum:
+        name: "*"
+        state: latest
+        security: yes
+      when: ansible_os_family == "RedHat"
+      register: yum_updates
+      
+    - name: Install security updates (Debian/Ubuntu)
+      apt:
+        upgrade: safe
+      when: ansible_os_family == "Debian"
+      register: apt_updates
+      
+    - name: Check if reboot is required (RedHat/CentOS)
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+      when: ansible_os_family == "RedHat"
+      
+    - name: Check if reboot is required (Debian/Ubuntu)
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+      when: ansible_os_family == "Debian"
+      
+    - name: Reboot system if required and enabled
+      reboot:
+        reboot_timeout: 600
+        test_command: uptime
+      when: 
+        - reboot_required | bool
+        - reboot_required_file.stat.exists | default(false) or yum_updates.changed | default(false) or apt_updates.changed | default(false)
+      
+  post_tasks:
+    - name: Verify system status after patching
+      command: uptime
+      register: post_patch_uptime
+      
+    - name: Display post-patch status
+      debug:
+        msg: |
+          Patching completed for {{ inventory_hostname }}
+          System uptime: {{ post_patch_uptime.stdout }}
+          Updates installed: {{ yum_updates.changed | default(false) or apt_updates.changed | default(false) }}
+          
+    - name: Generate patch report
+      copy:
+        content: |
+          Patch Report for {{ inventory_hostname }}
+          =====================================
+          Date: {{ ansible_date_time.iso8601 }}
+          Region: {{ region }}
+          Patch Group: {{ patch_group }}
+          Updates Applied: {{ yum_updates.changed | default(false) or apt_updates.changed | default(false) }}
+          Reboot Performed: {{ reboot_required and (reboot_required_file.stat.exists | default(false) or yum_updates.changed | default(false) or apt_updates.changed | default(false)) }}
+          Final Uptime: {{ post_patch_uptime.stdout }}
+        dest: /var/log/patch-report-{{ ansible_date_time.epoch }}.txt
+        mode: '0644'
+
+  handlers:
+    - name: restart services
+      systemd:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - NetworkManager
+        - sshd
+      listen: "restart critical services"
