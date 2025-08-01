@@ -1,0 +1,68 @@
+# Example Infrastructure Deployment Variables
+# This file demonstrates variables for infrastructure deployment documentation
+
+# MOP Metadata
+id: mop-infrastructure-deploy-001
+title: "Azure Infrastructure Deployment"
+description: "Deploy core infrastructure components across Azure regions"
+category: "infrastructure"
+version: "2.0.0"
+
+# Deployment Configuration
+deployment_type: "Blue-Green"
+environment: "production"
+
+# Infrastructure Components
+infrastructure_components:
+  - name: "Application Gateway"
+    type: "Microsoft.Network/applicationGateways"
+    size: "Standard_v2"
+    description: "Load balancer with SSL termination"
+  - name: "Virtual Machine Scale Set"
+    type: "Microsoft.Compute/virtualMachineScaleSets"
+    size: "Standard_D2s_v3"
+    description: "Auto-scaling web servers"
+  - name: "Azure SQL Database"
+    type: "Microsoft.Sql/servers/databases"
+    size: "S2"
+    description: "Primary application database"
+  - name: "Redis Cache"
+    type: "Microsoft.Cache/Redis"
+    size: "C1"
+    description: "Session and caching layer"
+
+# Network Configuration (per region)
+vnet_cidr: "10.0.0.0/16"
+web_subnet: "10.0.1.0/24"
+db_subnet: "10.0.2.0/24"
+monitoring_subnet: "10.0.3.0/24"
+
+# Health Checks
+health_checks:
+  - name: "Application Health"
+    endpoint: "https://app.example.com/health"
+    expected_response: "200 OK"
+    timeout: "30s"
+  - name: "Database Connectivity"
+    endpoint: "tcp://db.example.com:1433"
+    expected_response: "Connected"
+    timeout: "10s"
+  - name: "Cache Connectivity"
+    endpoint: "tcp://cache.example.com:6379"
+    expected_response: "PONG"
+    timeout: "5s"
+
+# Contacts
+regional_lead: "Regional Infrastructure Lead"
+devops_engineer: "DevOps Platform Engineer"
+sre_contact: "Site Reliability Engineer"
+l1_contact: "Level 1 Support"
+l2_contact: "Level 2 Infrastructure Team"
+l3_contact: "Level 3 Architecture Team"
+
+# Pipeline Configuration
+pipeline_variables:
+  enable_monitoring: true
+  backup_enabled: true
+  disaster_recovery: true
+  compliance_scanning: true

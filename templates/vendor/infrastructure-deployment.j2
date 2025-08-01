@@ -1,0 +1,207 @@
+# Infrastructure Deployment - {{ region.upper() }}
+
+## Deployment Overview
+
+Infrastructure deployment procedure for **{{ azure_region }}** region using Azure DevOps pipelines.
+
+### Deployment Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Environment**: {{ environment }}
+- **Deployment Type**: {{ deployment_type | default('Standard') }}
+- **ADO Organization**: {{ ado_organization }}
+- **Resource Group**: {{ resource_group }}
+{% if is_lea_region %}
+- **Early Access Features**: Enabled for preview deployment
+{% endif %}
+
+## Infrastructure Components
+
+### Core Infrastructure
+{% if infrastructure_components %}
+{% for component in infrastructure_components %}
+- **{{ component.name }}**: {{ component.description }}
+  - Type: {{ component.type }}
+  - Size: {{ component.size | default('Standard') }}
+  {% if component.location %}- Location: {{ component.location }}{% endif %}
+{% endfor %}
+{% else %}
+- Virtual Networks and Subnets
+- Load Balancers and Application Gateways  
+- Storage Accounts and Databases
+- Monitoring and Logging Infrastructure
+{% endif %}
+
+### Network Configuration
+- **VNet**: {{ 'vnet-prod-' + region }}
+- **Address Space**: {{ vnet_cidr | default('10.0.0.0/16') }}
+- **Subnets**:
+  - Web Tier: {{ web_subnet | default('10.0.1.0/24') }}
+  - DB Tier: {{ db_subnet | default('10.0.2.0/24') }}
+  - Monitoring: {{ monitoring_subnet | default('10.0.3.0/24') }}
+
+## Pre-Deployment Checklist
+
+### Azure Resources
+- [ ] Subscription access validated for {{ azure_region }}
+- [ ] Resource group {{ resource_group }} exists
+- [ ] Network Security Groups configured
+- [ ] Key Vault {{ key_vault }} accessible
+- [ ] Service Principal permissions verified
+
+### Azure DevOps Pipeline
+- [ ] Pipeline {{ pipeline_id }} exists in {{ ado_organization }}
+- [ ] Environment {{ environment }} configured
+- [ ] Variable groups populated
+- [ ] Service connections validated
+- [ ] Agent pools available
+
+## Deployment Steps
+
+### Step 1: Environment Preparation
+
+```bash
+# Validate Azure connectivity
+az account show --subscription {{ subscription_id }}
+
+# Verify resource group
+az group show --name {{ resource_group }} --subscription {{ subscription_id }}
+
+# Check key vault access
+az keyvault secret list --vault-name {{ key_vault }}
+```
+
+### Step 2: Pipeline Configuration
+
+The deployment pipeline will be configured with:
+
+```yaml
+# Pipeline variables
+variables:
+  region: {{ region }}
+  resourceGroup: {{ resource_group }}
+  subscriptionId: {{ subscription_id }}
+  environment: {{ environment }}
+  deploymentType: {{ deployment_type | default('standard') }}
+{% if pipeline_variables %}
+{% for key, value in pipeline_variables.items() %}
+  {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
+```
+
+### Step 3: Infrastructure Deployment
+
+Pipeline stages:
+1. **Validation**: ARM template validation and what-if analysis
+2. **Security**: Security scanning and compliance checks
+3. **Deployment**: Resource deployment with rollback capability
+4. **Verification**: Post-deployment testing and validation
+
+### Step 4: Post-Deployment Validation
+
+```bash
+# Verify core resources
+az resource list --resource-group {{ resource_group }} --output table
+
+# Test network connectivity
+az network vnet show --name vnet-prod-{{ region }} --resource-group {{ resource_group }}
+
+# Validate monitoring setup
+az monitor activity-log list --resource-group {{ resource_group }} --max-events 5
+```
+
+## Monitoring and Alerting
+
+### Health Checks
+{% if health_checks %}
+{% for check in health_checks %}
+- **{{ check.name }}**: {{ check.endpoint }}
+  - Expected Response: {{ check.expected_response | default('200 OK') }}
+  - Timeout: {{ check.timeout | default('30s') }}
+{% endfor %}
+{% else %}
+- Application Gateway health probe
+- Database connectivity check  
+- Storage account accessibility
+- Key Vault operations test
+{% endif %}
+
+### Alert Configuration
+- Infrastructure health alerts
+- Performance threshold monitoring
+- Security and compliance notifications
+- Cost management alerts
+
+## Region-Specific Considerations
+
+{% if region == 'eus2' %}
+### East US 2 (Primary)
+- Documentation wiki deployment target
+- Central logging and monitoring hub
+- Primary backup and recovery location
+{% elif region == 'wus2' %}
+### West US 2 (Primary West)
+- Disaster recovery target for eus2
+- High-availability configuration
+- Cross-region replication setup
+{% elif region == 'wus3' %}
+### West US 3 (Modern Infrastructure)
+- Latest Azure services and features
+- Optimized for modern workloads
+- Container and serverless focus
+{% elif region == 'scus' %}
+### South Central US (Hub)
+- Regional coordination center
+- Hybrid connectivity hub
+- Disaster recovery coordination
+{% elif region.endswith('lea') %}
+### Early Access Region
+- **Preview Feature Access**: Latest Azure capabilities
+- **Canary Deployment**: Test new infrastructure patterns
+- **Enhanced Monitoring**: Additional telemetry and logging
+- **Special Approval**: Requires EA program approval for changes
+{% endif %}
+
+## Rollback Procedures
+
+### Automatic Rollback Triggers
+- Deployment failure with exit code > 0
+- Health check failures post-deployment
+- Security scan failures
+- Performance degradation alerts
+
+### Manual Rollback Steps
+1. **Stop Pipeline**: Cancel current deployment
+2. **Assess Impact**: Determine affected resources
+3. **Execute Rollback**: Deploy previous known-good state
+4. **Validate Recovery**: Confirm system functionality
+
+## Success Criteria
+
+Deployment is successful when:
+- [ ] All ARM templates deploy without errors
+- [ ] Health checks pass for all components
+- [ ] Network connectivity verified between tiers
+- [ ] Monitoring and alerting operational
+- [ ] Security scans pass with no critical issues
+- [ ] Performance baselines established
+
+## Emergency Contacts
+
+### Escalation Path
+- **Level 1**: {{ l1_contact | default('Operations Team') }}
+- **Level 2**: {{ l2_contact | default('Infrastructure Team') }}  
+- **Level 3**: {{ l3_contact | default('Architecture Team') }}
+
+### Region Team
+- **Regional Lead**: {{ regional_lead | default('TBD') }}
+- **DevOps Engineer**: {{ devops_engineer | default('TBD') }}
+- **Site Reliability**: {{ sre_contact | default('TBD') }}
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})  
+**Deployment Type**: {{ deployment_type | default('Standard') }}

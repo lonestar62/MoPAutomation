@@ -52,6 +52,22 @@ class MOPLogger:
         
         return logger
     
+    def log_system(self, message: str, operation: str = None, level: str = 'info'):
+        """Log a system-level message"""
+        if operation:
+            full_message = f"[{operation}] {message}"
+        else:
+            full_message = message
+        
+        if level.lower() == 'error':
+            self.system_logger.error(full_message)
+        elif level.lower() == 'warning':
+            self.system_logger.warning(full_message)
+        elif level.lower() == 'debug':
+            self.system_logger.debug(full_message)
+        else:
+            self.system_logger.info(full_message)
+    
     def log_process_start(self, process_type: str, process_id: str, metadata: Dict[str, Any]) -> str:
         """Log the start of a process"""
         timestamp = datetime.now().isoformat()

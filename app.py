@@ -7,6 +7,7 @@ from renderer import MOPRenderer
 from executor import MOPExecutor
 from category_map import CATEGORY_TO_PLAYBOOK
 from logger import MOPLogger, log_process, mop_logger
+from docs_renderer import render_documentation, DocumentationRenderer
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -296,6 +297,148 @@ def get_mop_execution_history(mop_id):
     except Exception as e:
         app.logger.error(f"Error getting execution history for {mop_id}: {e}")
         return []
+
+# Documentation Rendering API Endpoints
+
+@app.route('/api/docs/render', methods=['POST'])
+def api_render_documentation():
+    """API endpoint to render documentation from vendor J2 templates"""
+    try:
+        data = request.get_json()
+        variables_file = data.get('variables_file')
+        wiki_config = data.get('wiki_config')
+        
+        if not variables_file:
+            return jsonify({
+                'success': False,
+                'error': 'variables_file is required'
+            }), 400
+        
+        result = render_documentation(variables_file, wiki_config)
+        return jsonify(result)
+    
+    except Exception as e:
+        logger.log_system(str(e), "api_render_documentation_error")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/docs/templates')
+def api_list_vendor_templates():
+    """List available vendor J2 templates"""
+    try:
+        doc_renderer = DocumentationRenderer()
+        templates = doc_renderer.load_vendor_templates()
+        template_list = [{'name': t.name, 'path': str(t)} for t in templates]
+        
+        return jsonify({
+            'success': True,
+            'templates': template_list,
+            'count': len(template_list)
+        })
+    
+    except Exception as e:
+        logger.log_system(str(e), "api_list_templates_error")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/docs/rendered')
+def api_list_rendered_docs():
+    """List rendered documentation files"""
+    try:
+        rendered_dir = Path("docs/rendered")
+        if not rendered_dir.exists():
+            return jsonify({
+                'success': True,
+                'documents': [],
+                'regions': []
+            })
+        
+        regions = ["eus2", "wus2", "wus3", "scus", "eus2lea", "wus2lea"]
+        documents = {}
+        
+        for region in regions:
+            region_dir = rendered_dir / region
+            if region_dir.exists():
+                documents[region] = []
+                for md_file in region_dir.glob("*.md"):
+                    documents[region].append({
+                        'name': md_file.stem,
+                        'filename': md_file.name,
+                        'path': str(md_file),
+                        'size': md_file.stat().st_size,
+                        'modified': datetime.fromtimestamp(md_file.stat().st_mtime).isoformat()
+                    })
+        
+        return jsonify({
+            'success': True,
+            'documents': documents,
+            'regions': regions
+        })
+    
+    except Exception as e:
+        logger.log_system(str(e), "api_list_rendered_docs_error")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/static/docs/<region>/<filename>')
+def serve_rendered_doc(region, filename):
+    """Serve rendered documentation files"""
+    try:
+        doc_path = Path("docs/rendered") / region / filename
+        if doc_path.exists() and doc_path.suffix == '.md':
+            with open(doc_path, 'r') as f:
+                content = f.read()
+            
+            # For now, serve as plain text. In production, this could be rendered as HTML
+            from flask import Response
+            return Response(content, mimetype='text/plain')
+        else:
+            return "Document not found", 404
+    except Exception as e:
+        app.logger.error(f"Error serving document {region}/{filename}: {e}")
+        return "Error loading document", 500
+
+@app.route('/docs')
+def documentation_page():
+    """Documentation rendering management page"""
+    try:
+        # Get available vendor templates
+        doc_renderer = DocumentationRenderer()
+        templates = doc_renderer.load_vendor_templates()
+        
+        # Get available variables files
+        vars_files = []
+        if os.path.exists('vars'):
+            vars_files = [f for f in os.listdir('vars') if f.endswith('.yml')]
+        
+        # Get rendered documents
+        rendered_docs = {}
+        rendered_dir = Path("docs/rendered")
+        if rendered_dir.exists():
+            regions = ["eus2", "wus2", "wus3", "scus", "eus2lea", "wus2lea"]
+            for region in regions:
+                region_dir = rendered_dir / region
+                if region_dir.exists():
+                    rendered_docs[region] = list(region_dir.glob("*.md"))
+        
+        return render_template('documentation.html', 
+                             templates=templates,
+                             vars_files=vars_files,
+                             rendered_docs=rendered_docs)
+    
+    except Exception as e:
+        app.logger.error(f"Error loading documentation page: {e}")
+        return render_template('documentation.html', 
+                             templates=[], 
+                             vars_files=[], 
+                             rendered_docs={}, 
+                             error=str(e))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

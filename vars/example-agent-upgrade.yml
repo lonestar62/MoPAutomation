@@ -1,0 +1,55 @@
+# Example Agent Upgrade Variables
+# This file demonstrates the variables used to render vendor J2 templates
+
+# MOP Metadata
+id: mop-agent-upgrade-001
+title: "Monitoring Agent Upgrade"
+description: "Upgrade monitoring agents across Azure regions"
+category: "agent-upgrade"
+version: "1.2.0"
+
+# Target Configuration
+target_group: "monitoring"
+target_version: "v2.1.6"
+agent_version: "v2.1.5"
+
+# Configuration Paths
+config_path: "/opt/monitoring/config"
+log_level: "INFO"
+retention_days: 30
+
+# Monitoring Endpoints
+monitoring_endpoint: "https://monitoring.example.com/health"
+primary_endpoint: "monitoring-{region}.example.com"
+backup_endpoint: "monitoring-backup-{region}.example.com"
+
+# Deployment Settings
+deployment_type: "rolling"
+max_fail_percentage: 10
+reboot_required: false
+
+# Custom Configuration
+custom_config:
+  enable_debug: false
+  max_connections: 100
+  timeout_seconds: 30
+  buffer_size: "64MB"
+
+# Emergency Contacts
+emergency_contacts:
+  - role: "Operations Lead"
+    name: "Jane Smith"
+    contact: "jane.smith@example.com"
+  - role: "DevOps Engineer"
+    name: "John Doe"
+    contact: "john.doe@example.com"
+
+# Operational Settings
+operations_contact: "ops@example.com"
+devops_contact: "devops@example.com"
+
+# Pipeline Variables (these will be replaced per region)
+pipeline_variables:
+  notification_webhook: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+  approval_required: true
+  rollback_enabled: true
