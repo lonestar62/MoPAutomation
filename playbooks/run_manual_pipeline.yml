@@ -4,9 +4,13 @@
   gather_facts: yes
   
   vars:
-    pipeline_name: "{{ pipeline_name | default('manual-deployment') }}"
-    devops_organization: "{{ devops_organization | default('company') }}"
-    devops_project: "{{ devops_project | default('infrastructure') }}"
+    # Use region-specific pipeline configuration from inventory
+    current_region: "{{ region | default('wus2') }}"
+    pipeline_name: "{{ pipeline_name | default('azure-deployment-' + current_region) }}"
+    devops_organization: "{{ ado_config.organization }}"
+    devops_project: "{{ ado_config.project }}"
+    pipeline_id: "{{ region_pipelines[current_region] }}"
+    azure_devops_token: "{{ ado_config.token }}"
     wait_for_completion: "{{ wait_for_completion | default(true) }}"
     pipeline_timeout: "{{ pipeline_timeout | default(1800) }}"  # 30 minutes
     check_interval: "{{ check_interval | default(30) }}"  # 30 seconds

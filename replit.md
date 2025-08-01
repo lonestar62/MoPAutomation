@@ -8,6 +8,14 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## Azure Multi-Region Ansible Configuration (August 2025)
+- **Status**: Completed - Full six-region Azure configuration with Ansible inventory
+- **Regions**: eus2, wus2, wus3, scus, eus2lea, wus2lea with dedicated pipelines
+- **Infrastructure**: Regional inventory, host groups, network configuration per region
+- **Azure DevOps**: Region-specific pipeline IDs and deployment configurations
+- **LEA Support**: Special handling for Early Access regions (eus2lea, wus2lea)
+- **Security**: Regional isolation, dedicated service principals, separate subscriptions
+
 ## Comprehensive Logging System with Ansible Integration (August 2025)
 - **Status**: Completed - Full logging infrastructure with comprehensive Ansible integration
 - **Components**: MOPLogger class with process, execution, system, and Ansible logging

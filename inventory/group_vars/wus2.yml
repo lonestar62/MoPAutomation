@@ -1,0 +1,30 @@
+# West US 2 Region Configuration
+
+azure_region_config:
+  name: "West US 2"
+  code: "wus2"
+  full_name: "westus2"
+  timezone: "America/Los_Angeles"
+  maintenance_window: "02:00-04:00 PST"
+
+azure_infrastructure:
+  subscription_id: "{{ vault_wus2_subscription_id }}"
+  resource_group: "rg-prod-wus2"
+  vnet_name: "vnet-prod-wus2"
+  key_vault: "kv-prod-wus2"
+  
+azure_devops:
+  pipeline_id: "{{ vault_wus2_pipeline_id }}"
+  environment: "wus2-production"
+  
+network_config:
+  vnet_cidr: "10.2.0.0/16"
+  subnets:
+    web: "10.2.1.0/24"
+    db: "10.2.2.0/24"
+    monitoring: "10.2.3.0/24"
+    
+security_groups:
+  web_nsg: "nsg-wus2-web"
+  db_nsg: "nsg-wus2-db"
+  monitoring_nsg: "nsg-wus2-monitoring"

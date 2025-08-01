@@ -1,6 +1,6 @@
 ---
 - name: Patch Linux Systems
-  hosts: "{{ region }}-linux-{{ patch_group | default('all') }}"
+  hosts: "{{ region }}_{{ target_group | default('web') }}"
   become: yes
   gather_facts: yes
   

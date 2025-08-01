@@ -1,0 +1,36 @@
+# West US 2 LEA Region Configuration
+
+azure_region_config:
+  name: "West US 2 LEA"
+  code: "wus2lea"
+  full_name: "westus2euap"
+  timezone: "America/Los_Angeles"
+  maintenance_window: "03:00-05:00 PST"  # Offset for LEA region
+
+azure_infrastructure:
+  subscription_id: "{{ vault_wus2lea_subscription_id }}"
+  resource_group: "rg-prod-wus2lea"
+  vnet_name: "vnet-prod-wus2lea"
+  key_vault: "kv-prod-wus2lea"
+  
+azure_devops:
+  pipeline_id: "{{ vault_wus2lea_pipeline_id }}"
+  environment: "wus2lea-production"
+  
+network_config:
+  vnet_cidr: "10.6.0.0/16"
+  subnets:
+    web: "10.6.1.0/24"
+    db: "10.6.2.0/24"
+    monitoring: "10.6.3.0/24"
+    
+security_groups:
+  web_nsg: "nsg-wus2lea-web"
+  db_nsg: "nsg-wus2lea-db"
+  monitoring_nsg: "nsg-wus2lea-monitoring"
+
+# LEA specific configurations
+lea_config:
+  early_access: true
+  preview_features: true
+  canary_deployment: true

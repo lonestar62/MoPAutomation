@@ -1,0 +1,88 @@
+# Global variables for all Azure regions and hosts
+
+# Azure Configuration
+azure_config:
+  tenant_id: "{{ vault_azure_tenant_id }}"
+  client_id: "{{ vault_azure_client_id }}"
+  client_secret: "{{ vault_azure_client_secret }}"
+  
+# Azure DevOps Configuration  
+ado_config:
+  organization: "{{ vault_ado_organization }}"
+  project: "{{ vault_ado_project }}"
+  token: "{{ vault_ado_token }}"
+  base_url: "https://dev.azure.com/{{ vault_ado_organization }}"
+
+# Region-specific pipeline mappings
+region_pipelines:
+  eus2: "{{ vault_eus2_pipeline_id }}"
+  wus2: "{{ vault_wus2_pipeline_id }}"
+  wus3: "{{ vault_wus3_pipeline_id }}"
+  scus: "{{ vault_scus_pipeline_id }}"
+  eus2lea: "{{ vault_eus2lea_pipeline_id }}"
+  wus2lea: "{{ vault_wus2lea_pipeline_id }}"
+
+# SSH Configuration
+ssh_config:
+  user: azureuser
+  private_key: ~/.ssh/azure_rsa
+  timeout: 30
+  retries: 3
+
+# Patching Configuration
+patch_config:
+  maintenance_windows:
+    eus2: "02:00-04:00 EST"
+    wus2: "02:00-04:00 PST"
+    wus3: "02:00-04:00 PST"
+    scus: "02:00-04:00 CST"
+    eus2lea: "03:00-05:00 EST"  # LEA regions offset
+    wus2lea: "03:00-05:00 PST"
+  reboot_strategy: "rolling"
+  max_fail_percentage: 10
+
+# Monitoring Configuration
+monitoring_config:
+  agent_versions:
+    current: "v2.1.5"
+    previous: "v2.1.4"
+  config_paths:
+    linux: "/opt/monitoring/config"
+    windows: "C:\\Program Files\\Monitoring\\config"
+  log_retention_days: 30
+
+# Git Configuration
+git_config:
+  default_branch: "main"
+  commit_author: "Azure Automation <automation@company.com>"
+  repositories:
+    config: "https://dev.azure.com/{{ vault_ado_organization }}/{{ vault_ado_project }}/_git/azure-config"
+    playbooks: "https://dev.azure.com/{{ vault_ado_organization }}/{{ vault_ado_project }}/_git/ansible-playbooks"
+
+# Network Configuration
+network_config:
+  vnets:
+    eus2: "vnet-prod-eus2"
+    wus2: "vnet-prod-wus2"
+    wus3: "vnet-prod-wus3"
+    scus: "vnet-prod-scus"
+    eus2lea: "vnet-prod-eus2lea"
+    wus2lea: "vnet-prod-wus2lea"
+  subnets:
+    web: "subnet-web"
+    db: "subnet-db"
+    monitoring: "subnet-monitoring"
+
+# Security Configuration
+security_config:
+  nsg_rules:
+    ssh: "allow-ssh"
+    monitoring: "allow-monitoring"
+    web: "allow-web"
+  key_vault_names:
+    eus2: "kv-prod-eus2"
+    wus2: "kv-prod-wus2"
+    wus3: "kv-prod-wus3"
+    scus: "kv-prod-scus"
+    eus2lea: "kv-prod-eus2lea"
+    wus2lea: "kv-prod-wus2lea"

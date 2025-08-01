@@ -1,0 +1,236 @@
+# Azure Multi-Region Inventory Configuration
+# Defines the six Azure DevOps regions for our infrastructure
+
+all:
+  children:
+    azure_regions:
+      children:
+        eus2:
+          hosts:
+            eus2-web01.azure.internal:
+              ansible_host: 10.1.1.10
+              azure_resource_group: rg-prod-eus2
+              azure_vm_name: web01-eus2
+            eus2-web02.azure.internal:
+              ansible_host: 10.1.1.11
+              azure_resource_group: rg-prod-eus2
+              azure_vm_name: web02-eus2
+            eus2-db01.azure.internal:
+              ansible_host: 10.1.2.10
+              azure_resource_group: rg-prod-eus2
+              azure_vm_name: db01-eus2
+            eus2-mon01.azure.internal:
+              ansible_host: 10.1.3.10
+              azure_resource_group: rg-prod-eus2
+              azure_vm_name: mon01-eus2
+          vars:
+            azure_region: eastus2
+            azure_region_code: eus2
+            azure_subscription_id: "{{ vault_eus2_subscription_id }}"
+            ado_pipeline_id: "{{ vault_eus2_pipeline_id }}"
+            
+        wus2:
+          hosts:
+            wus2-web01.azure.internal:
+              ansible_host: 10.2.1.10
+              azure_resource_group: rg-prod-wus2
+              azure_vm_name: web01-wus2
+            wus2-web02.azure.internal:
+              ansible_host: 10.2.1.11
+              azure_resource_group: rg-prod-wus2
+              azure_vm_name: web02-wus2
+            wus2-db01.azure.internal:
+              ansible_host: 10.2.2.10
+              azure_resource_group: rg-prod-wus2
+              azure_vm_name: db01-wus2
+            wus2-mon01.azure.internal:
+              ansible_host: 10.2.3.10
+              azure_resource_group: rg-prod-wus2
+              azure_vm_name: mon01-wus2
+          vars:
+            azure_region: westus2
+            azure_region_code: wus2
+            azure_subscription_id: "{{ vault_wus2_subscription_id }}"
+            ado_pipeline_id: "{{ vault_wus2_pipeline_id }}"
+            
+        wus3:
+          hosts:
+            wus3-web01.azure.internal:
+              ansible_host: 10.3.1.10
+              azure_resource_group: rg-prod-wus3
+              azure_vm_name: web01-wus3
+            wus3-web02.azure.internal:
+              ansible_host: 10.3.1.11
+              azure_resource_group: rg-prod-wus3
+              azure_vm_name: web02-wus3
+            wus3-db01.azure.internal:
+              ansible_host: 10.3.2.10
+              azure_resource_group: rg-prod-wus3
+              azure_vm_name: db01-wus3
+            wus3-mon01.azure.internal:
+              ansible_host: 10.3.3.10
+              azure_resource_group: rg-prod-wus3
+              azure_vm_name: mon01-wus3
+          vars:
+            azure_region: westus3
+            azure_region_code: wus3
+            azure_subscription_id: "{{ vault_wus3_subscription_id }}"
+            ado_pipeline_id: "{{ vault_wus3_pipeline_id }}"
+            
+        scus:
+          hosts:
+            scus-web01.azure.internal:
+              ansible_host: 10.4.1.10
+              azure_resource_group: rg-prod-scus
+              azure_vm_name: web01-scus
+            scus-web02.azure.internal:
+              ansible_host: 10.4.1.11
+              azure_resource_group: rg-prod-scus
+              azure_vm_name: web02-scus
+            scus-db01.azure.internal:
+              ansible_host: 10.4.2.10
+              azure_resource_group: rg-prod-scus
+              azure_vm_name: db01-scus
+            scus-mon01.azure.internal:
+              ansible_host: 10.4.3.10
+              azure_resource_group: rg-prod-scus
+              azure_vm_name: mon01-scus
+          vars:
+            azure_region: southcentralus
+            azure_region_code: scus
+            azure_subscription_id: "{{ vault_scus_subscription_id }}"
+            ado_pipeline_id: "{{ vault_scus_pipeline_id }}"
+            
+        eus2lea:
+          hosts:
+            eus2lea-web01.azure.internal:
+              ansible_host: 10.5.1.10
+              azure_resource_group: rg-prod-eus2lea
+              azure_vm_name: web01-eus2lea
+            eus2lea-web02.azure.internal:
+              ansible_host: 10.5.1.11
+              azure_resource_group: rg-prod-eus2lea
+              azure_vm_name: web02-eus2lea
+            eus2lea-db01.azure.internal:
+              ansible_host: 10.5.2.10
+              azure_resource_group: rg-prod-eus2lea
+              azure_vm_name: db01-eus2lea
+            eus2lea-mon01.azure.internal:
+              ansible_host: 10.5.3.10
+              azure_resource_group: rg-prod-eus2lea
+              azure_vm_name: mon01-eus2lea
+          vars:
+            azure_region: eastus2euap
+            azure_region_code: eus2lea
+            azure_subscription_id: "{{ vault_eus2lea_subscription_id }}"
+            ado_pipeline_id: "{{ vault_eus2lea_pipeline_id }}"
+            
+        wus2lea:
+          hosts:
+            wus2lea-web01.azure.internal:
+              ansible_host: 10.6.1.10
+              azure_resource_group: rg-prod-wus2lea
+              azure_vm_name: web01-wus2lea
+            wus2lea-web02.azure.internal:
+              ansible_host: 10.6.1.11
+              azure_resource_group: rg-prod-wus2lea
+              azure_vm_name: web02-wus2lea
+            wus2lea-db01.azure.internal:
+              ansible_host: 10.6.2.10
+              azure_resource_group: rg-prod-wus2lea
+              azure_vm_name: db01-wus2lea
+            wus2lea-mon01.azure.internal:
+              ansible_host: 10.6.3.10
+              azure_resource_group: rg-prod-wus2lea
+              azure_vm_name: mon01-wus2lea
+          vars:
+            azure_region: westus2euap
+            azure_region_code: wus2lea
+            azure_subscription_id: "{{ vault_wus2lea_subscription_id }}"
+            ado_pipeline_id: "{{ vault_wus2lea_pipeline_id }}"
+
+    # Functional groups across all regions
+    web_servers:
+      children:
+        eus2_web:
+          hosts:
+            eus2-web01.azure.internal:
+            eus2-web02.azure.internal:
+        wus2_web:
+          hosts:
+            wus2-web01.azure.internal:
+            wus2-web02.azure.internal:
+        wus3_web:
+          hosts:
+            wus3-web01.azure.internal:
+            wus3-web02.azure.internal:
+        scus_web:
+          hosts:
+            scus-web01.azure.internal:
+            scus-web02.azure.internal:
+        eus2lea_web:
+          hosts:
+            eus2lea-web01.azure.internal:
+            eus2lea-web02.azure.internal:
+        wus2lea_web:
+          hosts:
+            wus2lea-web01.azure.internal:
+            wus2lea-web02.azure.internal:
+            
+    database_servers:
+      children:
+        eus2_db:
+          hosts:
+            eus2-db01.azure.internal:
+        wus2_db:
+          hosts:
+            wus2-db01.azure.internal:
+        wus3_db:
+          hosts:
+            wus3-db01.azure.internal:
+        scus_db:
+          hosts:
+            scus-db01.azure.internal:
+        eus2lea_db:
+          hosts:
+            eus2lea-db01.azure.internal:
+        wus2lea_db:
+          hosts:
+            wus2lea-db01.azure.internal:
+            
+    monitoring_agents:
+      children:
+        eus2_monitoring:
+          hosts:
+            eus2-mon01.azure.internal:
+        wus2_monitoring:
+          hosts:
+            wus2-mon01.azure.internal:
+        wus3_monitoring:
+          hosts:
+            wus3-mon01.azure.internal:
+        scus_monitoring:
+          hosts:
+            scus-mon01.azure.internal:
+        eus2lea_monitoring:
+          hosts:
+            eus2lea-mon01.azure.internal:
+        wus2lea_monitoring:
+          hosts:
+            wus2lea-mon01.azure.internal:
+
+  vars:
+    # Global Azure settings
+    ansible_user: azureuser
+    ansible_ssh_private_key_file: ~/.ssh/azure_rsa
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    
+    # Azure authentication
+    azure_tenant_id: "{{ vault_azure_tenant_id }}"
+    azure_client_id: "{{ vault_azure_client_id }}"
+    azure_client_secret: "{{ vault_azure_client_secret }}"
+    
+    # Azure DevOps settings
+    ado_organization: "{{ vault_ado_organization }}"
+    ado_project: "{{ vault_ado_project }}"
+    ado_token: "{{ vault_ado_token }}"

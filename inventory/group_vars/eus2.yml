@@ -1,0 +1,30 @@
+# East US 2 Region Configuration
+
+azure_region_config:
+  name: "East US 2"
+  code: "eus2"
+  full_name: "eastus2"
+  timezone: "America/New_York"
+  maintenance_window: "02:00-04:00 EST"
+
+azure_infrastructure:
+  subscription_id: "{{ vault_eus2_subscription_id }}"
+  resource_group: "rg-prod-eus2"
+  vnet_name: "vnet-prod-eus2"
+  key_vault: "kv-prod-eus2"
+  
+azure_devops:
+  pipeline_id: "{{ vault_eus2_pipeline_id }}"
+  environment: "eus2-production"
+  
+network_config:
+  vnet_cidr: "10.1.0.0/16"
+  subnets:
+    web: "10.1.1.0/24"
+    db: "10.1.2.0/24"
+    monitoring: "10.1.3.0/24"
+    
+security_groups:
+  web_nsg: "nsg-eus2-web"
+  db_nsg: "nsg-eus2-db"
+  monitoring_nsg: "nsg-eus2-monitoring"

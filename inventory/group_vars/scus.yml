@@ -1,0 +1,30 @@
+# South Central US Region Configuration
+
+azure_region_config:
+  name: "South Central US"
+  code: "scus"
+  full_name: "southcentralus"
+  timezone: "America/Chicago"
+  maintenance_window: "02:00-04:00 CST"
+
+azure_infrastructure:
+  subscription_id: "{{ vault_scus_subscription_id }}"
+  resource_group: "rg-prod-scus"
+  vnet_name: "vnet-prod-scus"
+  key_vault: "kv-prod-scus"
+  
+azure_devops:
+  pipeline_id: "{{ vault_scus_pipeline_id }}"
+  environment: "scus-production"
+  
+network_config:
+  vnet_cidr: "10.4.0.0/16"
+  subnets:
+    web: "10.4.1.0/24"
+    db: "10.4.2.0/24"
+    monitoring: "10.4.3.0/24"
+    
+security_groups:
+  web_nsg: "nsg-scus-web"
+  db_nsg: "nsg-scus-db"
+  monitoring_nsg: "nsg-scus-monitoring"
