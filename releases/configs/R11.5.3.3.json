@@ -1,0 +1,195 @@
+{
+  "version": "R11.5.3.3",
+  "description": "Q1 2025 Release: Security patches, agent upgrades, and infrastructure updates",
+  "created_at": "2025-08-01T08:11:51.817202",
+  "created_by": "release_engineer",
+  "mops": [
+    {
+      "id": "agent-upgrade-mop",
+      "name": "Agent Upgrade Mop",
+      "description": "MOP procedure: agent-upgrade-mop",
+      "mop_type": "agent-upgrade",
+      "template_path": "templates/vendor/agent-upgrade-mop.j2",
+      "variables_required": [
+        "ado_organization",
+        "key_vault",
+        "region_code",
+        "pipeline_id",
+        "key",
+        "retention_days",
+        "azure_region",
+        "target_group",
+        "config_path",
+        "template_source",
+        "region",
+        "agent_version",
+        "primary_endpoint",
+        "ado_project",
+        "log_level",
+        "backup_endpoint",
+        "value",
+        "target_version",
+        "generated_at",
+        "environment",
+        "resource_group",
+        "monitoring_endpoint"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 30,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "infrastructure-deployment",
+      "name": "Infrastructure Deployment",
+      "description": "MOP procedure: infrastructure-deployment",
+      "mop_type": "infrastructure",
+      "template_path": "templates/vendor/infrastructure-deployment.j2",
+      "variables_required": [
+        "ado_organization",
+        "db_subnet",
+        "web_subnet",
+        "monitoring_subnet",
+        "key_vault",
+        "pipeline_id",
+        "sre_contact",
+        "vnet_cidr",
+        "key",
+        "component",
+        "azure_region",
+        "subscription_id",
+        "template_source",
+        "region",
+        "l3_contact",
+        "check",
+        "value",
+        "devops_engineer",
+        "l1_contact",
+        "regional_lead",
+        "generated_at",
+        "deployment_type",
+        "environment",
+        "resource_group",
+        "l2_contact"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 30,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "network-security-config",
+      "name": "Network Security Configuration",
+      "description": "Configure network security groups and firewall rules",
+      "mop_type": "network",
+      "template_path": "templates/vendor/network-security-config.j2",
+      "variables_required": [
+        "ado_organization",
+        "web_subnet",
+        "generated_at",
+        "azure_region",
+        "vpn_subnet",
+        "environment",
+        "resource_group",
+        "template_source",
+        "region"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 45,
+      "dependencies": [],
+      "risk_level": "high",
+      "approval_required": true
+    },
+    {
+      "id": "database-maintenance",
+      "name": "Database Maintenance",
+      "description": "Perform routine database maintenance and optimization",
+      "mop_type": "backup",
+      "template_path": "templates/vendor/database-maintenance.j2",
+      "variables_required": [
+        "index_rebuild_time",
+        "database_name",
+        "stats_update_time",
+        "generated_at",
+        "azure_region",
+        "app_team_contact",
+        "dba_contact",
+        "data_retention_days",
+        "cleanup_time",
+        "environment",
+        "table",
+        "resource_group",
+        "template_source",
+        "devops_contact",
+        "region"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 60,
+      "dependencies": [
+        "backup-verification"
+      ],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "patch-linux-systems",
+      "name": "Linux System Patching",
+      "description": "Apply security and system patches to Linux servers",
+      "mop_type": "patch-linux",
+      "template_path": "templates/vendor/patch-linux-systems.j2",
+      "variables_required": [
+        "ado_organization",
+        "sysadmin_contact",
+        "group",
+        "generated_at",
+        "azure_region",
+        "app_team_contact",
+        "maintenance_window",
+        "patch_category",
+        "security_contact",
+        "oncall_contact",
+        "environment",
+        "template_source",
+        "region"
+      ],
+      "playbooks": [
+        "patch_linux.yml"
+      ],
+      "estimated_duration": 90,
+      "dependencies": [
+        "backup-verification"
+      ],
+      "risk_level": "high",
+      "approval_required": true
+    }
+  ],
+  "execution_order": [
+    "eus2",
+    "wus2",
+    "wus3",
+    "scus",
+    "eus2lea",
+    "wus2lea"
+  ],
+  "status": "pending",
+  "current_region": null,
+  "current_mop": null
+}

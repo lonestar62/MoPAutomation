@@ -1,0 +1,365 @@
+{% extends 'base.html' %}
+
+{% block title %}Release Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1>MOP Release Management</h1>
+            <p class="lead">Manage vendor MOP releases and sequential execution across Azure organizations</p>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        <strong>Error:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Create New Release Section -->
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Create New Release</h3>
+                </div>
+                <div class="card-body">
+                    <form id="createReleaseForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="releaseVersion" class="form-label">Release Version</label>
+                                    <input type="text" class="form-control" id="releaseVersion" placeholder="R11.5.3.3" required>
+                                    <div class="form-text">Format: R{major}.{minor}.{patch}.{build}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="variablesFile" class="form-label">Variables File</label>
+                                    <select class="form-select" id="variablesFile" required>
+                                        <option value="">Select variables file...</option>
+                                        {% for vars_file in vars_files %}
+                                        <option value="{{ vars_file }}">{{ vars_file }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="releaseDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="releaseDescription" rows="3" placeholder="Describe this release and its MOPs..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="vendorDir" class="form-label">Vendor Templates Directory</label>
+                            <input type="text" class="form-control" id="vendorDir" value="templates/vendor" readonly>
+                            <div class="form-text">Directory containing vendor J2 templates</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-rocket"></i> Create Release
+                        </button>
+                    </form>
+
+                    <div id="createResults" class="mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Execution Order</h3>
+                </div>
+                <div class="card-body">
+                    <p>MOPs will be executed sequentially in this order:</p>
+                    <ol class="list-group list-group-numbered">
+                        <li class="list-group-item">
+                            <strong>EUS2</strong><br>
+                            <small class="text-muted">East US 2 (Primary)</small>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>WUS2</strong><br>
+                            <small class="text-muted">West US 2 (Primary West)</small>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>WUS3</strong><br>
+                            <small class="text-muted">West US 3 (Modern)</small>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>SCUS</strong><br>
+                            <small class="text-muted">South Central US (Hub)</small>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>EUS2LEA</strong><br>
+                            <small class="text-muted">East US 2 LEA (Early Access)</small>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>WUS2LEA</strong><br>
+                            <small class="text-muted">West US 2 LEA (Early Access)</small>
+                        </li>
+                    </ol>
+                    
+                    <div class="alert alert-info mt-3">
+                        <small><i class="fas fa-info-circle"></i> Only one organization executes at a time</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Releases Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3>Existing Releases</h3>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="refreshReleases()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if releases %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Version</th>
+                                    <th>Description</th>
+                                    <th>MOPs</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for release in releases %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ release.version }}</strong>
+                                        {% if release.current_region %}
+                                        <br><small class="text-info">Current: {{ release.current_region.upper() }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ release.description or 'No description' }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ release.total_mops }} MOPs</span>
+                                    </td>
+                                    <td>
+                                        {% if release.status == 'pending' %}
+                                        <span class="badge bg-secondary">{{ release.status.title() }}</span>
+                                        {% elif release.status == 'running' %}
+                                        <span class="badge bg-warning">{{ release.status.title() }}</span>
+                                        {% elif release.status == 'completed' %}
+                                        <span class="badge bg-success">{{ release.status.title() }}</span>
+                                        {% elif release.status == 'failed' %}
+                                        <span class="badge bg-danger">{{ release.status.title() }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ release.status.title() }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ release.created_at[:10] }}</small><br>
+                                        <small class="text-muted">{{ release.created_by }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="viewRelease('{{ release.version }}')">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            {% if release.status == 'pending' %}
+                                            <button class="btn btn-outline-success" onclick="startExecution('{{ release.version }}')">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                            {% endif %}
+                                            <button class="btn btn-outline-info" onclick="viewDocs('{{ release.version }}')">
+                                                <i class="fas fa-book"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-archive fa-3x text-muted mb-3"></i>
+                        <h5>No Releases Found</h5>
+                        <p class="text-muted">Create your first MOP release using the form above</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Release Details Modal -->
+<div class="modal fade" id="releaseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Release Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="releaseModalBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('createReleaseForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const releaseVersion = document.getElementById('releaseVersion').value;
+    const variablesFile = document.getElementById('variablesFile').value;
+    const description = document.getElementById('releaseDescription').value;
+    const vendorDir = document.getElementById('vendorDir').value;
+    const resultsDiv = document.getElementById('createResults');
+    
+    if (!releaseVersion || !variablesFile) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    // Show loading
+    resultsDiv.style.display = 'block';
+    resultsDiv.innerHTML = `
+        <div class="alert alert-info">
+            <div class="d-flex align-items-center">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                <span>Creating release ${releaseVersion}...</span>
+            </div>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch('/api/releases', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                release_version: releaseVersion,
+                variables_file: variablesFile,
+                description: description,
+                vendor_dir: vendorDir,
+                created_by: 'web_user'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            resultsDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h5><i class="fas fa-check-circle"></i> Release Created Successfully</h5>
+                    <p><strong>Version:</strong> ${result.release.version}</p>
+                    <p><strong>MOPs:</strong> ${result.release.total_mops}</p>
+                    <p><strong>Types:</strong> ${result.release.mop_types.join(', ')}</p>
+                    <p><strong>Documentation:</strong> ${result.documentation.total_documents} documents rendered</p>
+                </div>
+            `;
+            
+            // Reset form and refresh page
+            document.getElementById('createReleaseForm').reset();
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            resultsDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Creation Failed</h5>
+                    <p>${result.error}</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        resultsDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <h5><i class="fas fa-exclamation-triangle"></i> Request Failed</h5>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+});
+
+async function viewRelease(version) {
+    try {
+        const response = await fetch(`/api/releases/${version}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const release = result.release;
+            let modalContent = `
+                <h4>Release ${release.version}</h4>
+                <p><strong>Description:</strong> ${release.description}</p>
+                <p><strong>Status:</strong> <span class="badge bg-primary">${release.status}</span></p>
+                <p><strong>Created:</strong> ${release.created_at} by ${release.created_by}</p>
+                
+                <h5 class="mt-3">MOPs (${release.mops.length})</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Risk</th>
+                                <th>Duration</th>
+                                <th>Playbooks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            release.mops.forEach(mop => {
+                modalContent += `
+                    <tr>
+                        <td>
+                            <strong>${mop.name}</strong><br>
+                            <small class="text-muted">${mop.id}</small>
+                        </td>
+                        <td><span class="badge bg-secondary">${mop.mop_type}</span></td>
+                        <td><span class="badge bg-${mop.risk_level === 'high' ? 'danger' : mop.risk_level === 'medium' ? 'warning' : 'success'}">${mop.risk_level}</span></td>
+                        <td>${mop.estimated_duration}m</td>
+                        <td><small>${mop.playbooks.join(', ')}</small></td>
+                    </tr>
+                `;
+            });
+            
+            modalContent += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById('releaseModalBody').innerHTML = modalContent;
+            new bootstrap.Modal(document.getElementById('releaseModal')).show();
+        } else {
+            alert('Error loading release details: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function startExecution(version) {
+    // TODO: Implement execution management
+    alert(`Starting execution for release ${version} - Implementation pending`);
+}
+
+function viewDocs(version) {
+    // Open documentation in new tab
+    window.open(`/static/docs/releases/${version}/`, '_blank');
+}
+
+function refreshReleases() {
+    window.location.reload();
+}
+</script>
+{% endblock %}

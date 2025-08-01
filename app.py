@@ -8,6 +8,7 @@ from executor import MOPExecutor
 from category_map import CATEGORY_TO_PLAYBOOK
 from logger import MOPLogger, log_process, mop_logger
 from docs_renderer import render_documentation, DocumentationRenderer
+from release_manager import MOPReleaseManager, create_release_from_vendor_mops
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -386,6 +387,38 @@ def api_list_rendered_docs():
             'error': str(e)
         }), 500
 
+@app.route('/static/docs/releases/<release_version>/')
+def serve_release_index(release_version):
+    """Serve release documentation index"""
+    try:
+        index_path = Path("docs/releases") / release_version / "index.md"
+        if index_path.exists():
+            with open(index_path, 'r') as f:
+                content = f.read()
+            from flask import Response
+            return Response(content, mimetype='text/plain')
+        else:
+            return "Release not found", 404
+    except Exception as e:
+        app.logger.error(f"Error serving release {release_version}: {e}")
+        return "Error loading release", 500
+
+@app.route('/static/docs/releases/<release_version>/<region>/<filename>')
+def serve_release_doc(release_version, region, filename):
+    """Serve regional release documentation"""
+    try:
+        doc_path = Path("docs/releases") / release_version / region / filename
+        if doc_path.exists() and doc_path.suffix == '.md':
+            with open(doc_path, 'r') as f:
+                content = f.read()
+            from flask import Response
+            return Response(content, mimetype='text/plain')
+        else:
+            return "Document not found", 404
+    except Exception as e:
+        app.logger.error(f"Error serving document {release_version}/{region}/{filename}: {e}")
+        return "Error loading document", 500
+
 @app.route('/static/docs/<region>/<filename>')
 def serve_rendered_doc(region, filename):
     """Serve rendered documentation files"""
@@ -438,6 +471,132 @@ def documentation_page():
                              templates=[], 
                              vars_files=[], 
                              rendered_docs={}, 
+                             error=str(e))
+
+# Release Management API Endpoints
+
+@app.route('/api/releases', methods=['GET'])
+def api_list_releases():
+    """List all MOP releases"""
+    try:
+        manager = MOPReleaseManager()
+        releases = manager.list_releases()
+        
+        return jsonify({
+            'success': True,
+            'releases': releases,
+            'count': len(releases)
+        })
+    
+    except Exception as e:
+        logger.log_system(str(e), "api_list_releases_error")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/releases', methods=['POST'])
+def api_create_release():
+    """Create a new MOP release from vendor templates"""
+    try:
+        data = request.get_json()
+        vendor_dir = data.get('vendor_dir', 'templates/vendor')
+        release_version = data.get('release_version')
+        variables_file = data.get('variables_file')
+        description = data.get('description', '')
+        created_by = data.get('created_by', 'api_user')
+        
+        if not release_version or not variables_file:
+            return jsonify({
+                'success': False,
+                'error': 'release_version and variables_file are required'
+            }), 400
+        
+        result = create_release_from_vendor_mops(
+            vendor_dir, release_version, variables_file, description, created_by
+        )
+        
+        return jsonify(result)
+    
+    except Exception as e:
+        logger.log_system(str(e), "api_create_release_error")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/releases/<release_version>')
+def api_get_release(release_version):
+    """Get details of a specific release"""
+    try:
+        manager = MOPReleaseManager()
+        release = manager.load_release_definition(release_version)
+        
+        # Convert to dict for JSON serialization
+        release_dict = {
+            'version': release.version,
+            'description': release.description,
+            'created_at': release.created_at,
+            'created_by': release.created_by,
+            'status': release.status.value,
+            'execution_order': release.execution_order,
+            'current_region': release.current_region,
+            'current_mop': release.current_mop,
+            'mops': []
+        }
+        
+        for mop in release.mops:
+            mop_dict = {
+                'id': mop.id,
+                'name': mop.name,
+                'description': mop.description,
+                'mop_type': mop.mop_type.value,
+                'playbooks': mop.playbooks,
+                'estimated_duration': mop.estimated_duration,
+                'risk_level': mop.risk_level,
+                'approval_required': mop.approval_required,
+                'dependencies': mop.dependencies
+            }
+            release_dict['mops'].append(mop_dict)
+        
+        return jsonify({
+            'success': True,
+            'release': release_dict
+        })
+    
+    except FileNotFoundError:
+        return jsonify({
+            'success': False,
+            'error': f'Release {release_version} not found'
+        }), 404
+    except Exception as e:
+        logger.log_system(str(e), "api_get_release_error")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/releases')
+def releases_page():
+    """Release management page"""
+    try:
+        manager = MOPReleaseManager()
+        releases = manager.list_releases()
+        
+        # Get available variables files
+        vars_files = []
+        if os.path.exists('vars'):
+            vars_files = [f for f in os.listdir('vars') if f.endswith('.yml')]
+        
+        return render_template('releases.html', 
+                             releases=releases,
+                             vars_files=vars_files)
+    
+    except Exception as e:
+        app.logger.error(f"Error loading releases page: {e}")
+        return render_template('releases.html', 
+                             releases=[], 
+                             vars_files=[], 
                              error=str(e))
 
 if __name__ == '__main__':

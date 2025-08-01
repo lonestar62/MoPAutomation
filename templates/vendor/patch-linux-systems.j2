@@ -1,0 +1,260 @@
+{# METADATA:
+id: patch-linux-systems
+name: Linux System Patching
+description: Apply security and system patches to Linux servers
+estimated_duration: 90
+risk_level: high
+approval_required: true
+dependencies: ["backup-verification"]
+#}
+
+# Linux System Patching - {{ region.upper() }}
+
+## Overview
+
+Security and system patching procedure for Linux servers in **{{ azure_region }}** region.
+
+### Patching Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Environment**: {{ environment }}
+- **Patch Category**: {{ patch_category | default('Security + Critical') }}
+- **Maintenance Window**: {{ maintenance_window | default('02:00-06:00 UTC') }}
+- **ADO Organization**: {{ ado_organization }}
+
+## Pre-Patching Assessment
+
+### System Inventory
+```bash
+# Get list of systems requiring patches
+ansible {{ region }}_all -m shell -a "cat /etc/os-release | grep PRETTY_NAME"
+
+# Check current kernel version
+ansible {{ region }}_all -m shell -a "uname -r"
+
+# List available updates
+ansible {{ region }}_all -m shell -a "yum check-update --security" -b
+```
+
+### Backup Verification
+```bash
+# Verify recent backups exist
+ansible {{ region }}_all -m shell -a "ls -la /backup/ | head -10"
+
+# Test system state backup
+ansible {{ region }}_all -m shell -a "tar -czf /tmp/system-state-$(date +%Y%m%d).tar.gz /etc /var/log"
+```
+
+## Patching Strategy
+
+### Patch Categories
+{% if patch_category == 'Security' %}
+**Security Patches Only**
+- CVE-rated vulnerabilities
+- Security framework updates
+- Certificate updates
+{% elif patch_category == 'Critical' %}
+**Critical Patches**
+- System stability fixes
+- Performance improvements
+- Security vulnerabilities
+{% else %}
+**Security + Critical Patches**
+- All security vulnerabilities
+- Critical system updates
+- Stability improvements
+{% endif %}
+
+### Server Groups
+1. **Web Servers** (`{{ region }}_web`)
+   - Load balancer removal before patching
+   - Rolling restart capability
+   - Application health checks
+
+2. **Database Servers** (`{{ region }}_db`)
+   - Database cluster awareness
+   - Replication health monitoring
+   - Extended maintenance window
+
+3. **Application Servers** (`{{ region }}_app`)
+   - Service dependency mapping
+   - Graceful service shutdown
+   - Health check validation
+
+## Execution Procedure
+
+### Step 1: Pre-Patch Validation
+```bash
+# Check system health
+ansible {{ region }}_all -m shell -a "df -h | grep -E '(8[5-9]|9[0-9])%'" -b
+ansible {{ region }}_all -m shell -a "free -m | grep Mem"
+ansible {{ region }}_all -m shell -a "uptime"
+
+# Verify services are running
+ansible {{ region }}_web -m systemd -a "name=nginx state=started" -b
+ansible {{ region }}_app -m systemd -a "name=application state=started" -b
+ansible {{ region }}_db -m systemd -a "name=mysql state=started" -b
+```
+
+### Step 2: Remove from Load Balancer
+```bash
+# Remove web servers from load balancer
+{% for server in web_servers | default(['web01', 'web02']) %}
+ansible {{ region }}_lb -m shell -a "nginx -s reload" -b
+{% endfor %}
+
+# Verify traffic redirection
+ansible {{ region }}_lb -m shell -a "curl -I http://localhost/health"
+```
+
+### Step 3: Apply Patches
+```bash
+# Security patches
+ansible {{ region }}_all -m yum -a "name='*' state=latest security=yes" -b
+
+# System patches (if included)
+{% if patch_category != 'Security' %}
+ansible {{ region }}_all -m yum -a "name=kernel state=latest" -b
+ansible {{ region }}_all -m yum -a "name=glibc state=latest" -b
+ansible {{ region }}_all -m yum -a "name=openssl state=latest" -b
+{% endif %}
+
+# Update package database
+ansible {{ region }}_all -m shell -a "yum clean all && yum makecache" -b
+```
+
+### Step 4: Reboot Coordination
+```bash
+# Check if reboot is required
+ansible {{ region }}_all -m shell -a "[ -f /var/run/reboot-required ] && echo 'REBOOT REQUIRED' || echo 'NO REBOOT NEEDED'"
+
+# Coordinated reboot by group
+{% for group in ['db', 'app', 'web'] %}
+# Reboot {{ group }} servers
+ansible {{ region }}_{{ group }} -m reboot -a "reboot_timeout=600" -b
+
+# Wait for services to start
+sleep 60
+ansible {{ region }}_{{ group }} -m wait_for -a "port=22 timeout=300"
+{% endfor %}
+```
+
+### Step 5: Post-Patch Validation
+```bash
+# Verify system status
+ansible {{ region }}_all -m shell -a "uptime"
+ansible {{ region }}_all -m shell -a "systemctl is-system-running"
+
+# Check kernel version
+ansible {{ region }}_all -m shell -a "uname -r"
+
+# Verify critical services
+ansible {{ region }}_web -m uri -a "url=http://localhost/health"
+ansible {{ region }}_app -m shell -a "systemctl is-active application"
+ansible {{ region }}_db -m shell -a "systemctl is-active mysql"
+```
+
+### Step 6: Return to Load Balancer
+```bash
+# Add servers back to load balancer
+ansible {{ region }}_lb -m shell -a "nginx -s reload" -b
+
+# Verify full traffic restoration
+ansible {{ region }}_lb -m uri -a "url=http://localhost/health"
+```
+
+## Validation Checklist
+
+### System Health
+- [ ] All systems responsive
+- [ ] Kernel versions updated
+- [ ] Critical services running
+- [ ] No failed systemd units
+- [ ] Log files normal
+
+### Application Health
+- [ ] Web applications accessible
+- [ ] Database connections functional
+- [ ] API endpoints responding
+- [ ] Performance within baselines
+- [ ] No error rate increase
+
+### Security Validation
+```bash
+# Verify security updates applied
+ansible {{ region }}_all -m shell -a "yum history list | head -5"
+
+# Check for remaining vulnerabilities
+ansible {{ region }}_all -m shell -a "yum --security check-update"
+
+# Validate system hardening
+ansible {{ region }}_all -m shell -a "auditctl -l | wc -l"
+```
+
+## Rollback Procedures
+
+### Emergency Rollback
+```bash
+# Revert to previous kernel (if needed)
+ansible {{ region }}_all -m shell -a "grub2-set-default 1" -b
+ansible {{ region }}_all -m reboot -b
+
+# Restore from backup (critical failure only)
+ansible {{ region }}_all -m shell -a "tar -xzf /backup/system-state-*.tar.gz -C /"
+```
+
+### Package Downgrade
+```bash
+# List recent package changes
+ansible {{ region }}_all -m shell -a "yum history list | head -10"
+
+# Downgrade specific packages if needed
+ansible {{ region }}_all -m shell -a "yum downgrade package-name" -b
+```
+
+## Region-Specific Considerations
+
+{% if region == 'eus2' %}
+### East US 2 (Primary)
+- Documentation and monitoring hub
+- Extended maintenance window allowed
+- Full application stack coordination required
+{% elif region == 'wus2' %}
+### West US 2 (Disaster Recovery)
+- Maintain replication during patching
+- Coordinate with EUS2 timing
+- Fast rollback capability essential
+{% elif region.endswith('lea') %}
+### Early Access Region
+- Test patch compatibility first
+- Enhanced monitoring during maintenance
+- Report issues to product teams
+{% endif %}
+
+## Monitoring and Alerts
+
+### During Maintenance
+- System resource monitoring
+- Application performance tracking
+- Security event monitoring
+- Replication lag monitoring (if applicable)
+
+### Post-Maintenance
+- Performance baseline comparison
+- Security posture assessment
+- System stability monitoring
+- User experience metrics
+
+## Emergency Contacts
+
+- **System Administrators**: {{ sysadmin_contact | default('sysadmin@example.com') }}
+- **Security Team**: {{ security_contact | default('security@example.com') }}
+- **Application Team**: {{ app_team_contact | default('appteam@example.com') }}
+- **On-Call Engineer**: {{ oncall_contact | default('oncall@example.com') }}
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})  
+**Patch Category**: {{ patch_category | default('Security + Critical') }}

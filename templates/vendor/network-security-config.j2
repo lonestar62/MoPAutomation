@@ -1,0 +1,104 @@
+{# METADATA:
+id: network-security-config
+name: Network Security Configuration
+description: Configure network security groups and firewall rules
+estimated_duration: 45
+risk_level: high
+approval_required: true
+dependencies: []
+#}
+
+# Network Security Configuration - {{ region.upper() }}
+
+## Overview
+
+Network security configuration procedure for **{{ azure_region }}** region.
+
+### Security Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Environment**: {{ environment }}
+- **ADO Organization**: {{ ado_organization }}
+- **Resource Group**: {{ resource_group }}
+{% if is_lea_region %}
+- **Early Access Features**: Enhanced security policies enabled
+{% endif %}
+
+## Security Components
+
+### Network Security Groups
+- **Web NSG**: {{ 'nsg-web-' + region }}
+  - HTTP/HTTPS: Allow from Internet
+  - SSH: Restricted to management subnet
+- **Database NSG**: {{ 'nsg-db-' + region }}
+  - SQL: Allow from web tier only
+  - Management: Restricted access
+- **Management NSG**: {{ 'nsg-mgmt-' + region }}
+  - RDP/SSH: VPN access only
+  - Monitoring: Internal access
+
+### Firewall Rules
+```yaml
+firewall_rules:
+  web_tier:
+    - port: 80
+      protocol: TCP
+      source: "0.0.0.0/0"
+      action: allow
+    - port: 443
+      protocol: TCP
+      source: "0.0.0.0/0"
+      action: allow
+  database_tier:
+    - port: 1433
+      protocol: TCP
+      source: "{{ web_subnet }}"
+      action: allow
+  management:
+    - port: 22
+      protocol: TCP
+      source: "{{ vpn_subnet | default('10.0.100.0/24') }}"
+      action: allow
+```
+
+## Security Validation
+
+### Pre-Configuration Checks
+- [ ] Current security groups documented
+- [ ] Firewall rules backed up
+- [ ] Network topology verified
+- [ ] Change approval obtained
+
+### Post-Configuration Verification
+```bash
+# Verify NSG associations
+az network nsg list --resource-group {{ resource_group }} --output table
+
+# Test connectivity
+ansible {{ region }}_web -m shell -a "curl -I http://localhost"
+ansible {{ region }}_db -m shell -a "sqlcmd -S localhost -Q 'SELECT 1'"
+
+# Validate firewall rules
+az network nsg rule list --resource-group {{ resource_group }} --nsg-name nsg-web-{{ region }}
+```
+
+## Security Compliance
+
+### Required Validations
+- Network segmentation verified
+- Access controls properly configured
+- Logging and monitoring enabled
+- Compliance scan passed
+
+### Risk Mitigation
+- Backup connectivity maintained
+- Rollback procedures verified
+- Emergency access preserved
+- Security team notified
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})  
+**Risk Level**: HIGH

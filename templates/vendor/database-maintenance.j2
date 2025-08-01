@@ -1,0 +1,197 @@
+{# METADATA:
+id: database-maintenance
+name: Database Maintenance
+description: Perform routine database maintenance and optimization
+estimated_duration: 60
+risk_level: medium
+approval_required: true
+dependencies: ["backup-verification"]
+#}
+
+# Database Maintenance - {{ region.upper() }}
+
+## Overview
+
+Database maintenance procedure for **{{ azure_region }}** region.
+
+### Database Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Environment**: {{ environment }}
+- **Database Server**: {{ 'sqldb-prod-' + region + '.database.windows.net' }}
+- **Resource Group**: {{ resource_group }}
+
+## Maintenance Tasks
+
+### Index Optimization
+```sql
+-- Rebuild fragmented indexes
+USE [{{ database_name | default('ProductionDB') }}]
+GO
+
+-- Check index fragmentation
+SELECT 
+    OBJECT_NAME(OBJECT_ID) AS TableName,
+    s.name AS IndexName,
+    avg_fragmentation_in_percent
+FROM sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL, NULL) AS s
+INNER JOIN sys.indexes AS i ON s.object_id = i.object_id
+WHERE s.avg_fragmentation_in_percent > 10
+ORDER BY avg_fragmentation_in_percent DESC;
+
+-- Rebuild high fragmentation indexes
+{% for table in critical_tables | default(['Users', 'Orders', 'Products']) %}
+ALTER INDEX ALL ON [{{ table }}] REBUILD;
+{% endfor %}
+```
+
+### Statistics Update
+```sql
+-- Update database statistics
+UPDATE STATISTICS {{ database_name | default('ProductionDB') }};
+
+-- Update specific table statistics
+{% for table in critical_tables | default(['Users', 'Orders', 'Products']) %}
+UPDATE STATISTICS [{{ table }}] WITH FULLSCAN;
+{% endfor %}
+```
+
+### Cleanup Operations
+```sql
+-- Cleanup old data (retention: {{ data_retention_days | default(90) }} days)
+{% if cleanup_enabled | default(true) %}
+DELETE FROM AuditLog 
+WHERE LogDate < DATEADD(day, -{{ data_retention_days | default(90) }}, GETDATE());
+
+DELETE FROM SessionData 
+WHERE LastAccess < DATEADD(day, -30, GETDATE());
+{% endif %}
+
+-- Shrink log file if necessary
+{% if shrink_logs | default(false) %}
+USE [{{ database_name | default('ProductionDB') }}]
+DBCC SHRINKFILE(N'{{ database_name | default('ProductionDB') }}_Log', 1000);
+{% endif %}
+```
+
+## Pre-Maintenance Checklist
+
+### Backup Verification
+- [ ] Recent backup verified (< 24 hours)
+- [ ] Backup restoration tested
+- [ ] Transaction log backup current
+- [ ] Point-in-time recovery available
+
+### Performance Baseline
+```bash
+# Capture performance metrics
+ansible {{ region }}_db -m shell -a "sqlcmd -S {{ 'sqldb-prod-' + region + '.database.windows.net' }} -Q \"
+SELECT 
+    cntr_value as [Buffer Cache Hit Ratio]
+FROM sys.dm_os_performance_counters 
+WHERE counter_name = 'Buffer cache hit ratio'
+\""
+
+# Check active connections
+ansible {{ region }}_db -m shell -a "sqlcmd -Q \"
+SELECT 
+    DB_NAME(dbid) as DatabaseName,
+    COUNT(dbid) as NumberOfConnections
+FROM sys.sysprocesses 
+WHERE dbid > 0 
+GROUP BY dbid, DB_NAME(dbid)
+\""
+```
+
+## Execution Steps
+
+### Step 1: Preparation
+```bash
+# Set database to restricted mode during maintenance
+ansible {{ region }}_db -m shell -a "sqlcmd -Q \"
+ALTER DATABASE [{{ database_name | default('ProductionDB') }}] 
+SET RESTRICTED_USER WITH ROLLBACK IMMEDIATE
+\""
+```
+
+### Step 2: Maintenance Tasks
+- Index rebuilding (estimated {{ index_rebuild_time | default(30) }} minutes)
+- Statistics update (estimated {{ stats_update_time | default(15) }} minutes)
+- Cleanup operations (estimated {{ cleanup_time | default(10) }} minutes)
+
+### Step 3: Validation
+```bash
+# Verify database integrity
+ansible {{ region }}_db -m shell -a "sqlcmd -Q \"DBCC CHECKDB('{{ database_name | default('ProductionDB') }}') WITH NO_INFOMSGS\""
+
+# Check performance improvements
+ansible {{ region }}_db -m shell -a "sqlcmd -Q \"
+SELECT 
+    OBJECT_NAME(object_id) AS TableName,
+    avg_fragmentation_in_percent 
+FROM sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL, NULL)
+WHERE avg_fragmentation_in_percent > 5
+\""
+```
+
+### Step 4: Restore Access
+```bash
+# Return database to normal access
+ansible {{ region }}_db -m shell -a "sqlcmd -Q \"
+ALTER DATABASE [{{ database_name | default('ProductionDB') }}] 
+SET MULTI_USER
+\""
+```
+
+## Post-Maintenance Validation
+
+### Performance Verification
+- [ ] Query response times improved
+- [ ] Index fragmentation reduced
+- [ ] Statistics updated successfully
+- [ ] Database integrity verified
+
+### Application Testing
+- [ ] Application connectivity verified
+- [ ] Critical functions tested
+- [ ] Performance monitoring resumed
+- [ ] Error logs reviewed
+
+## Region-Specific Notes
+
+{% if region == 'eus2' %}
+### East US 2 (Primary)
+- Contains production customer data
+- Extended maintenance window: 02:00-05:00 EST
+- Automated failover to WUS2 if needed
+{% elif region == 'wus2' %}
+### West US 2 (Secondary)
+- Disaster recovery target
+- Maintenance window: 02:00-05:00 PST
+- Replication lag monitoring critical
+{% elif region.endswith('lea') %}
+### Early Access Region
+- Test new maintenance procedures first
+- Enhanced monitoring during maintenance
+- Shorter maintenance window for validation
+{% endif %}
+
+## Emergency Procedures
+
+### Rollback Plan
+1. Restore from pre-maintenance backup
+2. Verify data consistency
+3. Resume application services
+4. Notify incident response team
+
+### Emergency Contacts
+- **DBA Team**: {{ dba_contact | default('dba@example.com') }}
+- **DevOps**: {{ devops_contact | default('devops@example.com') }}
+- **Application Team**: {{ app_team_contact | default('appteam@example.com') }}
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})  
+**Database**: {{ database_name | default('ProductionDB') }}

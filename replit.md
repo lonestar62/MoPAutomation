@@ -8,6 +8,16 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## MOP Release Management System (August 2025)
+- **Status**: Completed - Full release management platform for vendor MOPs
+- **Capabilities**: Type detection, automated playbook assignment, regional rendering
+- **Version Control**: Releases with version folders (e.g., R11.5.3.3) and regional subfolders
+- **Execution Management**: Sequential execution framework with observability controls
+- **Documentation**: Automated generation of regional MOP documentation with frontmatter metadata
+- **Safety Controls**: Careful execution management to prevent unexpected automation runs
+- **MOP Types**: Agent upgrade, infrastructure, patch-linux, network security, database maintenance
+- **Integration**: Complete web interface for release creation and management
+
 ## Azure Multi-Region Ansible Configuration (August 2025)
 - **Status**: Completed - Full six-region Azure configuration with Ansible inventory
 - **Regions**: eus2, wus2, wus3, scus, eus2lea, wus2lea with separate ADO organizations
