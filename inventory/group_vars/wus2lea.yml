@@ -14,8 +14,12 @@ azure_infrastructure:
   key_vault: "kv-prod-wus2lea"
   
 azure_devops:
+  organization: "{{ vault_wus2lea_ado_organization }}"
+  project: "{{ vault_wus2lea_ado_project }}"
+  token: "{{ vault_wus2lea_ado_token }}"
+  base_url: "https://dev.azure.com/{{ vault_wus2lea_ado_organization }}"
   pipeline_id: "{{ vault_wus2lea_pipeline_id }}"
-  environment: "wus2lea-production"
+  environment: "{{ vault_wus2lea_environment }}"
   
 network_config:
   vnet_cidr: "10.6.0.0/16"

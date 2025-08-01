@@ -45,22 +45,25 @@ Each region is allocated a /16 network:
 
 ## Azure DevOps Integration
 
-### Pipeline Configuration
-Each region has dedicated Azure DevOps pipelines:
+### Separate ADO Organizations
+Each region has its own complete Azure DevOps organization:
 ```yaml
-region_pipelines:
-  eus2: "{{ vault_eus2_pipeline_id }}"
-  wus2: "{{ vault_wus2_pipeline_id }}"
-  wus3: "{{ vault_wus3_pipeline_id }}"
-  scus: "{{ vault_scus_pipeline_id }}"
-  eus2lea: "{{ vault_eus2lea_pipeline_id }}"
-  wus2lea: "{{ vault_wus2lea_pipeline_id }}"
+ado_organizations:
+  eus2:
+    organization: "{{ vault_eus2_ado_organization }}"
+    project: "{{ vault_eus2_ado_project }}" 
+    token: "{{ vault_eus2_ado_token }}"
+    pipeline_id: "{{ vault_eus2_pipeline_id }}"
+    environment: "{{ vault_eus2_environment }}"
+  # ... (repeated for all 6 regions)
 ```
 
 ### Authentication Configuration
-- **Service Principals**: Region-specific for resource access
-- **Subscriptions**: Separate subscription per region
+- **PAT Tokens**: Separate Personal Access Tokens per ADO organization
+- **Service Principals**: Region-specific for Azure resource access
+- **Subscriptions**: Separate Azure subscription per region
 - **Key Vaults**: Regional key vaults for secrets management
+- **Organization Isolation**: Complete separation of ADO organizations
 
 ## How Ansible Connects to Azure Regions
 

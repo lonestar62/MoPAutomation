@@ -4,13 +4,16 @@
   gather_facts: yes
   
   vars:
-    # Use region-specific pipeline configuration from inventory
+    # Use region-specific ADO organization configuration
     current_region: "{{ region | default('wus2') }}"
+    region_ado_config: "{{ ado_organizations[current_region] }}"
     pipeline_name: "{{ pipeline_name | default('azure-deployment-' + current_region) }}"
-    devops_organization: "{{ ado_config.organization }}"
-    devops_project: "{{ ado_config.project }}"
-    pipeline_id: "{{ region_pipelines[current_region] }}"
-    azure_devops_token: "{{ ado_config.token }}"
+    devops_organization: "{{ region_ado_config.organization }}"
+    devops_project: "{{ region_ado_config.project }}"
+    pipeline_id: "{{ region_ado_config.pipeline_id }}"
+    azure_devops_token: "{{ region_ado_config.token }}"
+    environment_name: "{{ region_ado_config.environment }}"
+    base_url: "{{ region_ado_config.base_url }}"
     wait_for_completion: "{{ wait_for_completion | default(true) }}"
     pipeline_timeout: "{{ pipeline_timeout | default(1800) }}"  # 30 minutes
     check_interval: "{{ check_interval | default(30) }}"  # 30 seconds
@@ -25,13 +28,16 @@
           Wait for Completion: {{ wait_for_completion }}
           Region: {{ region | default('N/A') }}
           
-    - name: Validate required pipeline parameters
+    - name: Validate region and ADO organization configuration
       assert:
         that:
-          - pipeline_name is defined
-          - devops_organization is defined
-          - devops_project is defined
-        fail_msg: "Required pipeline parameters are missing"
+          - current_region in ado_organizations
+          - region_ado_config is defined
+          - region_ado_config.organization is defined
+          - region_ado_config.project is defined
+          - region_ado_config.pipeline_id is defined
+          - region_ado_config.token is defined
+        fail_msg: "Region {{ current_region }} ADO organization not configured or missing credentials"
         
     - name: Check Azure CLI availability
       command: az --version

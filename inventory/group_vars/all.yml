@@ -6,21 +6,51 @@ azure_config:
   client_id: "{{ vault_azure_client_id }}"
   client_secret: "{{ vault_azure_client_secret }}"
   
-# Azure DevOps Configuration  
-ado_config:
-  organization: "{{ vault_ado_organization }}"
-  project: "{{ vault_ado_project }}"
-  token: "{{ vault_ado_token }}"
-  base_url: "https://dev.azure.com/{{ vault_ado_organization }}"
-
-# Region-specific pipeline mappings
-region_pipelines:
-  eus2: "{{ vault_eus2_pipeline_id }}"
-  wus2: "{{ vault_wus2_pipeline_id }}"
-  wus3: "{{ vault_wus3_pipeline_id }}"
-  scus: "{{ vault_scus_pipeline_id }}"
-  eus2lea: "{{ vault_eus2lea_pipeline_id }}"
-  wus2lea: "{{ vault_wus2lea_pipeline_id }}"
+# Azure DevOps Per-Region Organization Configuration
+# Each region is a separate ADO organization with its own pipelines
+ado_organizations:
+  eus2:
+    organization: "{{ vault_eus2_ado_organization }}"
+    project: "{{ vault_eus2_ado_project }}"
+    token: "{{ vault_eus2_ado_token }}"
+    base_url: "https://dev.azure.com/{{ vault_eus2_ado_organization }}"
+    pipeline_id: "{{ vault_eus2_pipeline_id }}"
+    environment: "{{ vault_eus2_environment }}"
+  wus2:
+    organization: "{{ vault_wus2_ado_organization }}"
+    project: "{{ vault_wus2_ado_project }}"
+    token: "{{ vault_wus2_ado_token }}"
+    base_url: "https://dev.azure.com/{{ vault_wus2_ado_organization }}"
+    pipeline_id: "{{ vault_wus2_pipeline_id }}"
+    environment: "{{ vault_wus2_environment }}"
+  wus3:
+    organization: "{{ vault_wus3_ado_organization }}"
+    project: "{{ vault_wus3_ado_project }}"
+    token: "{{ vault_wus3_ado_token }}"
+    base_url: "https://dev.azure.com/{{ vault_wus3_ado_organization }}"
+    pipeline_id: "{{ vault_wus3_pipeline_id }}"
+    environment: "{{ vault_wus3_environment }}"
+  scus:
+    organization: "{{ vault_scus_ado_organization }}"
+    project: "{{ vault_scus_ado_project }}"
+    token: "{{ vault_scus_ado_token }}"
+    base_url: "https://dev.azure.com/{{ vault_scus_ado_organization }}"
+    pipeline_id: "{{ vault_scus_pipeline_id }}"
+    environment: "{{ vault_scus_environment }}"
+  eus2lea:
+    organization: "{{ vault_eus2lea_ado_organization }}"
+    project: "{{ vault_eus2lea_ado_project }}"
+    token: "{{ vault_eus2lea_ado_token }}"
+    base_url: "https://dev.azure.com/{{ vault_eus2lea_ado_organization }}"
+    pipeline_id: "{{ vault_eus2lea_pipeline_id }}"
+    environment: "{{ vault_eus2lea_environment }}"
+  wus2lea:
+    organization: "{{ vault_wus2lea_ado_organization }}"
+    project: "{{ vault_wus2lea_ado_project }}"
+    token: "{{ vault_wus2lea_ado_token }}"
+    base_url: "https://dev.azure.com/{{ vault_wus2lea_ado_organization }}"
+    pipeline_id: "{{ vault_wus2lea_pipeline_id }}"
+    environment: "{{ vault_wus2lea_environment }}"
 
 # SSH Configuration
 ssh_config:

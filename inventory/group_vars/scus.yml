@@ -14,8 +14,12 @@ azure_infrastructure:
   key_vault: "kv-prod-scus"
   
 azure_devops:
+  organization: "{{ vault_scus_ado_organization }}"
+  project: "{{ vault_scus_ado_project }}"
+  token: "{{ vault_scus_ado_token }}"
+  base_url: "https://dev.azure.com/{{ vault_scus_ado_organization }}"
   pipeline_id: "{{ vault_scus_pipeline_id }}"
-  environment: "scus-production"
+  environment: "{{ vault_scus_environment }}"
   
 network_config:
   vnet_cidr: "10.4.0.0/16"

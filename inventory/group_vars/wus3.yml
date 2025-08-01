@@ -14,8 +14,12 @@ azure_infrastructure:
   key_vault: "kv-prod-wus3"
   
 azure_devops:
+  organization: "{{ vault_wus3_ado_organization }}"
+  project: "{{ vault_wus3_ado_project }}"
+  token: "{{ vault_wus3_ado_token }}"
+  base_url: "https://dev.azure.com/{{ vault_wus3_ado_organization }}"
   pipeline_id: "{{ vault_wus3_pipeline_id }}"
-  environment: "wus3-production"
+  environment: "{{ vault_wus3_environment }}"
   
 network_config:
   vnet_cidr: "10.3.0.0/16"

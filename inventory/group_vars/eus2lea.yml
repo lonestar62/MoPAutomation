@@ -14,8 +14,12 @@ azure_infrastructure:
   key_vault: "kv-prod-eus2lea"
   
 azure_devops:
+  organization: "{{ vault_eus2lea_ado_organization }}"
+  project: "{{ vault_eus2lea_ado_project }}"
+  token: "{{ vault_eus2lea_ado_token }}"
+  base_url: "https://dev.azure.com/{{ vault_eus2lea_ado_organization }}"
   pipeline_id: "{{ vault_eus2lea_pipeline_id }}"
-  environment: "eus2lea-production"
+  environment: "{{ vault_eus2lea_environment }}"
   
 network_config:
   vnet_cidr: "10.5.0.0/16"
