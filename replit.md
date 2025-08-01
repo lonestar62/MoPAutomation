@@ -1,6 +1,6 @@
 # Overview
 
-This is a MOP (Method of Procedure) Automation Platform that automates the rendering, classification, and execution of Markdown-based operational procedures using Flask and Ansible. The system replaces manual MOP execution with an automated workflow that renders Jinja2 templates, executes Ansible playbooks based on categories, and provides a web interface for management and monitoring.
+This is a MOP (Method of Procedure) Automation Platform that automates the rendering, classification, and execution of Markdown-based operational procedures using a Flask backend, Next.js frontend, and Ansible orchestration. The system replaces manual MOP execution with an automated workflow that renders Jinja2 templates, executes Ansible playbooks based on categories, and provides both web interfaces for management and monitoring.
 
 # User Preferences
 
@@ -9,10 +9,11 @@ Preferred communication style: Simple, everyday language.
 # System Architecture
 
 ## Frontend Architecture
-- **Flask Web Application**: Serves as the main interface with Bootstrap-based responsive UI
+- **Next.js Frontend**: Modern React-based interface for MOP management and execution
+- **Flask Web Application**: Serves as admin interface with Bootstrap-based responsive UI for configuration
 - **Template Engine**: Jinja2 for rendering both web templates and MOP content
 - **Static Assets**: CSS/JS for enhanced user experience with CodeMirror integration for code editing
-- **Navigation Structure**: Dashboard, MOP listing, detailed views, and editing interfaces
+- **Navigation Structure**: Dual interface - Next.js for operations, Flask for administration
 
 ## Backend Architecture
 - **Flask Application**: Core web server handling routing, templating, and API endpoints

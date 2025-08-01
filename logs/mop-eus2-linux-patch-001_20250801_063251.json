@@ -1,0 +1,37 @@
+{
+  "execution_id": "mop-eus2-linux-patch-001_20250801_063251",
+  "mop_id": "mop-eus2-linux-patch-001",
+  "timestamp": "2025-08-01T06:32:51.991755",
+  "category": "patch-linux",
+  "playbooks": [
+    "patch_linux.yml"
+  ],
+  "success": true,
+  "results": [
+    {
+      "playbook": "patch_linux.yml",
+      "success": true,
+      "return_code": 0,
+      "output": "\nPLAY [Patch Linux Systems] ****************************************************\n\nTASK [Update package cache] ***************************************************\nok: [server1.eastus2.example.com]\nok: [server2.eastus2.example.com]\n\nTASK [Install security updates] **********************************************\nchanged: [server1.eastus2.example.com]\nchanged: [server2.eastus2.example.com]\n\nTASK [Reboot if required] *****************************************************\nskipping: [server1.eastus2.example.com]\nchanged: [server2.eastus2.example.com]\n\nPLAY RECAP ********************************************************************\nserver1.eastus2.example.com : ok=2    changed=1    unreachable=0    failed=0\nserver2.eastus2.example.com : ok=3    changed=2    unreachable=0    failed=0\n",
+      "start_time": "2025-08-01T06:32:51.999282",
+      "end_time": "2025-08-01T06:32:53.369553",
+      "duration_seconds": 1.370271
+    }
+  ],
+  "variables": {
+    "id": "mop-eus2-linux-patch-001",
+    "title": "Patch Critical Linux VMs - East US 2",
+    "category": "patch-linux",
+    "region": "eastus2",
+    "patch_group": "critical",
+    "maintenance_window": "02:00-04:00",
+    "reboot_required": true,
+    "execution_time": "45-60",
+    "impact_level": "High",
+    "approval_reference": "CHG-2024-001234",
+    "technical_contact": "Linux Operations Team",
+    "playbooks": [
+      "patch_linux.yml"
+    ]
+  }
+}

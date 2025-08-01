@@ -1,0 +1,12 @@
+{
+  "name": "mop-ansible-renderer-frontend",
+  "version": "1.0.0",
+  "description": "Next.js frontend for MOP Ansible Renderer",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "next lint"
+  }
+}
