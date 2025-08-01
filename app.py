@@ -229,6 +229,19 @@ def api_search_logs():
         app.logger.error(f"Error searching logs: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/logs/ansible')
+def api_get_ansible_logs():
+    """Get Ansible-specific logs"""
+    try:
+        playbook_name = request.args.get('playbook_name')
+        limit = int(request.args.get('limit', 50))
+        
+        logs = logger.get_ansible_logs(playbook_name, limit)
+        return jsonify({'success': True, 'logs': logs})
+    except Exception as e:
+        app.logger.error(f"Error getting Ansible logs: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/logs')
 def logs_dashboard():
     """Logs dashboard page"""

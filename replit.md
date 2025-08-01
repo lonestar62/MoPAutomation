@@ -8,12 +8,14 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
-## Comprehensive Logging System (August 2025)
-- **Status**: Completed - Full logging infrastructure with web dashboard
-- **Components**: MOPLogger class with process, execution, and system logging
-- **API Integration**: Complete RESTful logging API with search capabilities
-- **Dashboard**: Web-based logs dashboard with real-time viewing and filtering
-- **Features**: Process tracking, execution monitoring, error logging, and log search
+## Comprehensive Logging System with Ansible Integration (August 2025)
+- **Status**: Completed - Full logging infrastructure with comprehensive Ansible integration
+- **Components**: MOPLogger class with process, execution, system, and Ansible logging
+- **Ansible Integration**: Captures STDOUT, STDERR, log files, JSON callbacks, and performance data
+- **API Integration**: Complete RESTful logging API with specialized Ansible endpoints
+- **Dashboard**: Web-based logs dashboard with dedicated Ansible log viewer and analysis
+- **Features**: Process tracking, execution monitoring, error logging, log search, and Ansible performance analysis
+- **Log Types**: System logs, execution logs, process logs, and comprehensive Ansible logs with timing data
 
 ## Next.js Frontend Integration (January 2025)
 - **Status**: Completed - Full Next.js frontend with TypeScript configuration

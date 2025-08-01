@@ -140,6 +140,11 @@
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ansible-logs-tab" data-bs-toggle="tab" data-bs-target="#ansible-logs" type="button" role="tab">
+                                <i class="fas fa-cogs"></i> Ansible Logs
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="search-results-tab" data-bs-toggle="tab" data-bs-target="#search-results" type="button" role="tab" style="display: none;">
                                 <i class="fas fa-search"></i> Search Results
                             </button>
@@ -193,6 +198,21 @@
                             </div>
                         </div>
 
+                        <!-- Ansible Logs -->
+                        <div class="tab-pane fade" id="ansible-logs" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>Ansible Execution Logs</h5>
+                                <button class="btn btn-sm btn-outline-primary" onclick="loadAnsibleLogs()">
+                                    <i class="fas fa-refresh"></i> Refresh
+                                </button>
+                            </div>
+                            <div class="log-container" id="ansibleLogsContainer">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading Ansible logs...
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Search Results -->
                         <div class="tab-pane fade" id="search-results" role="tabpanel">
                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -231,6 +251,10 @@
         
         document.getElementById('system-logs-tab').addEventListener('click', function() {
             loadSystemLogs();
+        });
+        
+        document.getElementById('ansible-logs-tab').addEventListener('click', function() {
+            loadAnsibleLogs();
         });
 
         // Search on Enter key
@@ -433,6 +457,127 @@
                 html += `<div class="${logClass}">${escapeHtml(line)}</div>`;
             });
             html += '</div>';
+            
+            container.innerHTML = html;
+        }
+
+        async function loadAnsibleLogs() {
+            const container = document.getElementById('ansibleLogsContainer');
+            const limit = document.getElementById('logLimit').value;
+            
+            container.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            
+            try {
+                const response = await fetch(`/api/logs/ansible?limit=${limit}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayAnsibleLogs(data.logs, container);
+                } else {
+                    container.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="alert alert-danger">Network error: ${error.message}</div>`;
+            }
+        }
+
+        function displayAnsibleLogs(logs, container) {
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="text-muted">No Ansible logs found</div>';
+                return;
+            }
+            
+            let html = '';
+            logs.forEach(log => {
+                const timestamp = new Date(log.timestamp).toLocaleString();
+                const playbookName = log.playbook_name || 'Unknown';
+                const totalDuration = log.logs?.performance?.total_duration || 0;
+                const taskCount = log.logs?.json_output?.length || 0;
+                
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><strong>${playbookName}</strong> - Ansible Execution</span>
+                            <span class="badge bg-primary">Duration: ${totalDuration.toFixed(2)}s</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Timestamp:</small> ${timestamp}<br>
+                                    <small class="text-muted">Tasks Executed:</small> ${taskCount}<br>
+                                    <small class="text-muted">Return Code:</small> ${log.logs?.return_code || 'N/A'}
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">Playbook Path:</small> ${log.playbook || 'N/A'}<br>
+                                    <small class="text-muted">MOP ID:</small> ${log.execution_metadata?.mop_id || 'N/A'}
+                                </div>
+                            </div>
+                            
+                            <!-- Ansible Log Details -->
+                            <div class="mt-3">
+                                <ul class="nav nav-pills nav-sm mb-2" role="tablist">
+                                    <li class="nav-item">
+                                        <button class="nav-link active btn-sm" data-bs-toggle="pill" data-bs-target="#stdout-${log.timestamp}" type="button">
+                                            STDOUT
+                                        </button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#json-${log.timestamp}" type="button">
+                                            JSON Data
+                                        </button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#performance-${log.timestamp}" type="button">
+                                            Performance
+                                        </button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#ansible-log-${log.timestamp}" type="button">
+                                            Ansible Log
+                                        </button>
+                                    </li>
+                                </ul>
+                                
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="stdout-${log.timestamp}">
+                                        <pre class="log-entry" style="max-height: 300px; overflow-y: auto;">${log.logs?.stdout || 'No STDOUT available'}</pre>
+                                    </div>
+                                    <div class="tab-pane fade" id="json-${log.timestamp}">
+                                        <pre class="log-entry" style="max-height: 300px; overflow-y: auto;">${JSON.stringify(log.logs?.json_output || {}, null, 2)}</pre>
+                                    </div>
+                                    <div class="tab-pane fade" id="performance-${log.timestamp}">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6>Task Timings</h6>
+                                                ${(log.logs?.performance?.task_timings || []).map(task => `
+                                                    <div class="d-flex justify-content-between">
+                                                        <span>${task.task}</span>
+                                                        <span class="badge bg-secondary">${task.duration}s</span>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>Summary</h6>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Total Duration:</span>
+                                                    <span class="badge bg-primary">${totalDuration.toFixed(2)}s</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Slow Tasks:</span>
+                                                    <span class="badge bg-warning">${(log.logs?.performance?.slow_tasks || []).length}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="ansible-log-${log.timestamp}">
+                                        <pre class="log-entry" style="max-height: 300px; overflow-y: auto;">${log.logs?.ansible_log || 'No detailed log available'}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
             
             container.innerHTML = html;
         }

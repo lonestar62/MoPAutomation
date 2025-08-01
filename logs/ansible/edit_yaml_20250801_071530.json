@@ -1,0 +1,132 @@
+{
+  "timestamp": "2025-08-01T07:15:30.123456",
+  "playbook": "/app/playbooks/edit_yaml.yml",
+  "playbook_name": "edit_yaml",
+  "log_type": "ansible_comprehensive",
+  "logs": {
+    "stdout": "\nPLAY [Edit YAML Configuration] ************************************************\n\nTASK [Gathering Facts] *********************************************************\nok: [localhost]\n\nTASK [Backup existing configuration] *****************************************\nchanged: [localhost] => {\n    \"backup_file\": \"/tmp/config_backup_20250801_071530.yml\",\n    \"changed\": true,\n    \"checksum\": \"da39a3ee5e6b4b0d3255bfef95601890afd80709\",\n    \"dest\": \"/tmp/config_backup_20250801_071530.yml\",\n    \"gid\": 1000,\n    \"group\": \"runner\",\n    \"md5sum\": \"d41d8cd98f00b204e9800998ecf8427e\",\n    \"mode\": \"0644\",\n    \"owner\": \"runner\",\n    \"size\": 0,\n    \"src\": \"/home/runner/.ansible/tmp/ansible-tmp-1733024530.123-234567-89012/source\",\n    \"state\": \"file\",\n    \"uid\": 1000\n}\n\nTASK [Update YAML values] *****************************************************\nchanged: [localhost] => {\n    \"changed\": true,\n    \"msg\": \"line replaced\"\n}\n\nTASK [Validate YAML syntax] **************************************************\nok: [localhost] => {\n    \"changed\": false,\n    \"cmd\": \"python3 -c 'import yaml; yaml.safe_load(open(\\\"/app/config/monitoring-agents.yml\\\"))'\",\n    \"delta\": \"0:00:00.045231\",\n    \"end\": \"2025-08-01 07:15:32.456789\",\n    \"rc\": 0,\n    \"start\": \"2025-08-01 07:15:32.411558\",\n    \"stderr\": \"\",\n    \"stderr_lines\": [],\n    \"stdout\": \"\",\n    \"stdout_lines\": []\n}\n\nPLAY RECAP ********************************************************************\nlocalhost                  : ok=4    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0\n",
+    "stderr": "2025-08-01 07:15:30,123 p=12345 u=runner n=ansible | PLAY [Edit YAML Configuration] ************************************************\n2025-08-01 07:15:30,234 p=12345 u=runner n=ansible | TASK [Gathering Facts] *********************************************************\n2025-08-01 07:15:30,567 p=12345 u=runner n=ansible | ok: [localhost]\n2025-08-01 07:15:30,678 p=12345 u=runner n=ansible | TASK [Backup existing configuration] *****************************************\n2025-08-01 07:15:31,123 p=12345 u=runner n=ansible | changed: [localhost]\n2025-08-01 07:15:31,234 p=12345 u=runner n=ansible | TASK [Update YAML values] *****************************************************\n2025-08-01 07:15:31,567 p=12345 u=runner n=ansible | changed: [localhost]\n2025-08-01 07:15:31,678 p=12345 u=runner n=ansible | TASK [Validate YAML syntax] **************************************************\n2025-08-01 07:15:32,123 p=12345 u=runner n=ansible | ok: [localhost]\n",
+    "return_code": 0,
+    "ansible_log": "2025-08-01 07:15:30,123 INFO     PLAY [Edit YAML Configuration]\n2025-08-01 07:15:30,234 INFO     TASK [Gathering Facts]\n2025-08-01 07:15:30,567 INFO     ok: [localhost]\n2025-08-01 07:15:30,678 INFO     TASK [Backup existing configuration]\n2025-08-01 07:15:31,123 INFO     changed: [localhost] => backup created at /tmp/config_backup_20250801_071530.yml\n2025-08-01 07:15:31,234 INFO     TASK [Update YAML values]\n2025-08-01 07:15:31,567 INFO     changed: [localhost] => line 'agent_version: v2.1.4' replaced with 'agent_version: v2.1.5'\n2025-08-01 07:15:31,678 INFO     TASK [Validate YAML syntax]\n2025-08-01 07:15:32,123 INFO     ok: [localhost] => YAML syntax is valid\n",
+    "json_output": [
+      {
+        "play": {
+          "duration": {
+            "end": "2025-08-01T07:15:32.456789",
+            "start": "2025-08-01T07:15:30.123456"
+          },
+          "id": "00212345-0000-0000-0000-000000000001",
+          "name": "Edit YAML Configuration"
+        },
+        "task": {
+          "duration": {
+            "end": "2025-08-01T07:15:30.567890",
+            "start": "2025-08-01T07:15:30.234567"
+          },
+          "id": "00212345-0000-0000-0000-000000000002",
+          "name": "Gathering Facts"
+        },
+        "host": "localhost",
+        "status": "OK",
+        "results": {
+          "changed": false,
+          "ansible_facts": {
+            "ansible_os_family": "Debian",
+            "ansible_distribution": "Ubuntu",
+            "ansible_distribution_version": "22.04",
+            "ansible_python_version": "3.11.0"
+          }
+        }
+      },
+      {
+        "play": {
+          "duration": {
+            "end": "2025-08-01T07:15:32.456789",
+            "start": "2025-08-01T07:15:30.123456"
+          },
+          "id": "00212345-0000-0000-0000-000000000001",
+          "name": "Edit YAML Configuration"
+        },
+        "task": {
+          "duration": {
+            "end": "2025-08-01T07:15:31.123456",
+            "start": "2025-08-01T07:15:30.678901"
+          },
+          "id": "00212345-0000-0000-0000-000000000003",
+          "name": "Backup existing configuration"
+        },
+        "host": "localhost",
+        "status": "CHANGED",
+        "results": {
+          "changed": true,
+          "backup_file": "/tmp/config_backup_20250801_071530.yml",
+          "checksum": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+          "dest": "/tmp/config_backup_20250801_071530.yml"
+        }
+      },
+      {
+        "play": {
+          "duration": {
+            "end": "2025-08-01T07:15:32.456789",
+            "start": "2025-08-01T07:15:30.123456"
+          },
+          "id": "00212345-0000-0000-0000-000000000001",
+          "name": "Edit YAML Configuration"
+        },
+        "task": {
+          "duration": {
+            "end": "2025-08-01T07:15:31.567890",
+            "start": "2025-08-01T07:15:31.234567"
+          },
+          "id": "00212345-0000-0000-0000-000000000004",
+          "name": "Update YAML values"
+        },
+        "host": "localhost",
+        "status": "CHANGED",
+        "results": {
+          "changed": true,
+          "msg": "line replaced",
+          "before": "agent_version: v2.1.4",
+          "after": "agent_version: v2.1.5"
+        }
+      }
+    ],
+    "performance": {
+      "total_duration": 2.333333,
+      "task_timings": [
+        {
+          "task": "Gathering Facts",
+          "duration": 0.333333,
+          "host": "localhost"
+        },
+        {
+          "task": "Backup existing configuration", 
+          "duration": 0.444555,
+          "host": "localhost"
+        },
+        {
+          "task": "Update YAML values",
+          "duration": 0.333333,
+          "host": "localhost"
+        },
+        {
+          "task": "Validate YAML syntax",
+          "duration": 0.444555,
+          "host": "localhost"
+        }
+      ],
+      "slow_tasks": []
+    }
+  },
+  "variables": {
+    "agent_version": "v2.1.5",
+    "config_file": "config/monitoring-agents.yml",
+    "backup_enabled": true
+  },
+  "execution_metadata": {
+    "mop_id": "mop-wus2-agent-upgrade-001",
+    "execution_id": "mop-wus2-agent-upgrade-001_20250801_071530",
+    "user": "automation_system",
+    "environment": "development"
+  }
+}

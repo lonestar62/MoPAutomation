@@ -202,12 +202,16 @@ class MOPLogger:
             return []
     
     def get_execution_logs(self, mop_id: str = None, limit: int = 50) -> List[Dict[str, Any]]:
-        """Get MOP execution logs"""
+        """Get MOP execution logs including Ansible logs"""
         logs = []
         
         try:
-            # Check both main logs directory and executions subdirectory
-            log_dirs = [self.logs_dir, self.execution_logs_dir]
+            # Check multiple log directories
+            log_dirs = [
+                self.logs_dir, 
+                self.execution_logs_dir,
+                os.path.join(self.logs_dir, 'ansible')  # Ansible-specific logs
+            ]
             
             for log_dir in log_dirs:
                 if not os.path.exists(log_dir):
@@ -225,8 +229,10 @@ class MOPLogger:
                         with open(filepath, 'r') as f:
                             log_data = json.load(f)
                             
-                        # Ensure it's an execution log
-                        if 'execution_id' in log_data or 'mop_id' in log_data:
+                        # Include execution logs and Ansible comprehensive logs
+                        if ('execution_id' in log_data or 
+                            'mop_id' in log_data or 
+                            log_data.get('log_type') == 'ansible_comprehensive'):
                             logs.append(log_data)
                             
                     except Exception as e:
@@ -239,6 +245,43 @@ class MOPLogger:
             
         except Exception as e:
             self.system_logger.error(f"Error getting execution logs: {e}")
+            return []
+    
+    def get_ansible_logs(self, playbook_name: str = None, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get Ansible-specific logs with detailed execution data"""
+        logs = []
+        ansible_logs_dir = os.path.join(self.logs_dir, 'ansible')
+        
+        try:
+            if not os.path.exists(ansible_logs_dir):
+                return logs
+                
+            for filename in os.listdir(ansible_logs_dir):
+                if not filename.endswith('.json'):
+                    continue
+                
+                if playbook_name and not filename.startswith(playbook_name):
+                    continue
+                
+                filepath = os.path.join(ansible_logs_dir, filename)
+                try:
+                    with open(filepath, 'r') as f:
+                        log_data = json.load(f)
+                    
+                    # Ensure it's an Ansible log
+                    if log_data.get('log_type') == 'ansible_comprehensive':
+                        logs.append(log_data)
+                        
+                except Exception as e:
+                    self.system_logger.warning(f"Error reading Ansible log {filename}: {e}")
+            
+            # Sort by timestamp (newest first)
+            logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+            
+            return logs[:limit]
+            
+        except Exception as e:
+            self.system_logger.error(f"Error getting Ansible logs: {e}")
             return []
     
     def search_logs(self, query: str, log_type: str = 'all', limit: int = 100) -> List[Dict[str, Any]]:
