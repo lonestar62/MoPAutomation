@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 from renderer import MOPRenderer
 from executor import MOPExecutor
 from category_map import CATEGORY_TO_PLAYBOOK
+from logger import MOPLogger, log_process, mop_logger
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -17,6 +18,7 @@ app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-prod
 # Initialize components
 renderer = MOPRenderer()
 executor = MOPExecutor()
+logger = MOPLogger()
 
 # Ensure required directories exist
 os.makedirs('logs', exist_ok=True)
@@ -170,6 +172,67 @@ def api_execute_mop(mop_id):
     except Exception as e:
         app.logger.error(f"API error executing MOP {mop_id}: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# Logging API Endpoints
+@app.route('/api/logs/processes')
+def api_get_process_logs():
+    """Get process logs"""
+    try:
+        process_id = request.args.get('process_id')
+        limit = int(request.args.get('limit', 100))
+        
+        logs = logger.get_process_logs(process_id, limit)
+        return jsonify({'success': True, 'logs': logs})
+    except Exception as e:
+        app.logger.error(f"Error getting process logs: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/logs/executions')
+def api_get_execution_logs():
+    """Get execution logs"""
+    try:
+        mop_id = request.args.get('mop_id')
+        limit = int(request.args.get('limit', 50))
+        
+        logs = logger.get_execution_logs(mop_id, limit)
+        return jsonify({'success': True, 'logs': logs})
+    except Exception as e:
+        app.logger.error(f"Error getting execution logs: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/logs/system')
+def api_get_system_logs():
+    """Get system logs"""
+    try:
+        lines = int(request.args.get('lines', 100))
+        
+        logs = logger.get_system_logs(lines)
+        return jsonify({'success': True, 'logs': logs})
+    except Exception as e:
+        app.logger.error(f"Error getting system logs: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/logs/search')
+def api_search_logs():
+    """Search logs"""
+    try:
+        query = request.args.get('query', '')
+        log_type = request.args.get('type', 'all')
+        limit = int(request.args.get('limit', 100))
+        
+        if not query:
+            return jsonify({'success': False, 'error': 'Query parameter required'}), 400
+        
+        results = logger.search_logs(query, log_type, limit)
+        return jsonify({'success': True, 'results': results})
+    except Exception as e:
+        app.logger.error(f"Error searching logs: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/logs')
+def logs_dashboard():
+    """Logs dashboard page"""
+    return render_template('logs_dashboard.html')
 
 def get_recent_executions(limit=10):
     """Get recent MOP executions"""

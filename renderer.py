@@ -3,6 +3,7 @@ import yaml
 import logging
 from jinja2 import Environment, FileSystemLoader, Template
 from category_map import CATEGORY_TO_PLAYBOOK
+from logger import log_process, mop_logger
 
 class MOPRenderer:
     """Handles MOP template rendering using Jinja2"""

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs Dashboard - MOP Ansible Automation</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .log-entry {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .log-timestamp {
+            color: var(--bs-secondary);
+            font-weight: bold;
+        }
+        .log-level-error {
+            color: #dc3545;
+        }
+        .log-level-warning {
+            color: #ffc107;
+        }
+        .log-level-info {
+            color: #0dcaf0;
+        }
+        .log-level-debug {
+            color: #6c757d;
+        }
+        .log-container {
+            max-height: 500px;
+            overflow-y: auto;
+            background: var(--bs-gray-900);
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0.375rem;
+            padding: 1rem;
+        }
+        .search-box {
+            position: sticky;
+            top: 0;
+            background: var(--bs-body-bg);
+            z-index: 10;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--bs-border-color);
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-2 bg-dark">
+                <div class="sidebar p-3">
+                    <h5><i class="fas fa-home"></i> Navigation</h5>
+                    <nav class="nav flex-column">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                        <a class="nav-link" href="{{ url_for('list_mops') }}">
+                            <i class="fas fa-list"></i> MOPs
+                        </a>
+                        <a class="nav-link active" href="{{ url_for('logs_dashboard') }}">
+                            <i class="fas fa-file-alt"></i> Logs
+                        </a>
+                        <a class="nav-link" href="{{ url_for('api_demo') }}">
+                            <i class="fas fa-cog"></i> API Demo
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <div class="col-md-10">
+                <div class="main-content p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h1><i class="fas fa-file-alt"></i> Logs Dashboard</h1>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-secondary" onclick="refreshLogs()">
+                                <i class="fas fa-refresh"></i> Refresh
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearLogs()">
+                                <i class="fas fa-trash"></i> Clear Display
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search and Filter Section -->
+                    <div class="search-box">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="searchQuery" class="form-label">Search Logs</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="searchQuery" placeholder="Enter search query...">
+                                    <button class="btn btn-primary" type="button" onclick="searchLogs()">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="logType" class="form-label">Log Type</label>
+                                <select class="form-select" id="logType">
+                                    <option value="all">All Logs</option>
+                                    <option value="execution">Execution Logs</option>
+                                    <option value="process">Process Logs</option>
+                                    <option value="system">System Logs</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="logLimit" class="form-label">Limit</label>
+                                <select class="form-select" id="logLimit">
+                                    <option value="50">50 entries</option>
+                                    <option value="100" selected>100 entries</option>
+                                    <option value="200">200 entries</option>
+                                    <option value="500">500 entries</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="mopFilter" class="form-label">MOP Filter</label>
+                                <input type="text" class="form-control" id="mopFilter" placeholder="Filter by MOP ID...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Log Tabs -->
+                    <ul class="nav nav-tabs mb-3" id="logTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="execution-logs-tab" data-bs-toggle="tab" data-bs-target="#execution-logs" type="button" role="tab">
+                                <i class="fas fa-play"></i> Execution Logs
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="process-logs-tab" data-bs-toggle="tab" data-bs-target="#process-logs" type="button" role="tab">
+                                <i class="fas fa-cogs"></i> Process Logs
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="system-logs-tab" data-bs-toggle="tab" data-bs-target="#system-logs" type="button" role="tab">
+                                <i class="fas fa-server"></i> System Logs
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="search-results-tab" data-bs-toggle="tab" data-bs-target="#search-results" type="button" role="tab" style="display: none;">
+                                <i class="fas fa-search"></i> Search Results
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="logTabContent">
+                        <!-- Execution Logs -->
+                        <div class="tab-pane fade show active" id="execution-logs" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>MOP Execution Logs</h5>
+                                <button class="btn btn-sm btn-outline-primary" onclick="loadExecutionLogs()">
+                                    <i class="fas fa-refresh"></i> Refresh
+                                </button>
+                            </div>
+                            <div class="log-container" id="executionLogsContainer">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading execution logs...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Process Logs -->
+                        <div class="tab-pane fade" id="process-logs" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>Process Logs</h5>
+                                <button class="btn btn-sm btn-outline-primary" onclick="loadProcessLogs()">
+                                    <i class="fas fa-refresh"></i> Refresh
+                                </button>
+                            </div>
+                            <div class="log-container" id="processLogsContainer">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading process logs...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Logs -->
+                        <div class="tab-pane fade" id="system-logs" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>System Logs</h5>
+                                <button class="btn btn-sm btn-outline-primary" onclick="loadSystemLogs()">
+                                    <i class="fas fa-refresh"></i> Refresh
+                                </button>
+                            </div>
+                            <div class="log-container" id="systemLogsContainer">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading system logs...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search Results -->
+                        <div class="tab-pane fade" id="search-results" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>Search Results</h5>
+                                <span class="badge bg-secondary" id="searchResultsCount">0 results</span>
+                            </div>
+                            <div class="log-container" id="searchResultsContainer">
+                                <div class="text-center text-muted">
+                                    Enter a search query to see results
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Auto-load logs on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadExecutionLogs();
+        });
+
+        // Tab change handlers
+        document.getElementById('execution-logs-tab').addEventListener('click', function() {
+            loadExecutionLogs();
+        });
+        
+        document.getElementById('process-logs-tab').addEventListener('click', function() {
+            loadProcessLogs();
+        });
+        
+        document.getElementById('system-logs-tab').addEventListener('click', function() {
+            loadSystemLogs();
+        });
+
+        // Search on Enter key
+        document.getElementById('searchQuery').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchLogs();
+            }
+        });
+
+        async function loadExecutionLogs() {
+            const container = document.getElementById('executionLogsContainer');
+            const limit = document.getElementById('logLimit').value;
+            const mopFilter = document.getElementById('mopFilter').value;
+            
+            container.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            
+            try {
+                let url = `/api/logs/executions?limit=${limit}`;
+                if (mopFilter) {
+                    url += `&mop_id=${encodeURIComponent(mopFilter)}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayExecutionLogs(data.logs, container);
+                } else {
+                    container.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="alert alert-danger">Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadProcessLogs() {
+            const container = document.getElementById('processLogsContainer');
+            const limit = document.getElementById('logLimit').value;
+            
+            container.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            
+            try {
+                const response = await fetch(`/api/logs/processes?limit=${limit}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayProcessLogs(data.logs, container);
+                } else {
+                    container.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="alert alert-danger">Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadSystemLogs() {
+            const container = document.getElementById('systemLogsContainer');
+            const lines = document.getElementById('logLimit').value;
+            
+            container.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            
+            try {
+                const response = await fetch(`/api/logs/system?lines=${lines}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySystemLogs(data.logs, container);
+                } else {
+                    container.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="alert alert-danger">Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function searchLogs() {
+            const query = document.getElementById('searchQuery').value.trim();
+            const logType = document.getElementById('logType').value;
+            const limit = document.getElementById('logLimit').value;
+            const container = document.getElementById('searchResultsContainer');
+            
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+            
+            // Show search results tab
+            document.getElementById('search-results-tab').style.display = 'block';
+            document.getElementById('search-results-tab').click();
+            
+            container.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+            
+            try {
+                const response = await fetch(`/api/logs/search?query=${encodeURIComponent(query)}&type=${logType}&limit=${limit}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySearchResults(data.results, container);
+                    document.getElementById('searchResultsCount').textContent = `${data.results.length} results`;
+                } else {
+                    container.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="alert alert-danger">Network error: ${error.message}</div>`;
+            }
+        }
+
+        function displayExecutionLogs(logs, container) {
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="text-muted">No execution logs found</div>';
+                return;
+            }
+            
+            let html = '';
+            logs.forEach(log => {
+                const statusClass = log.success ? 'success' : 'danger';
+                const timestamp = new Date(log.timestamp).toLocaleString();
+                
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><strong>${log.mop_id || log.execution_id}</strong></span>
+                            <span class="badge bg-${statusClass}">${log.success ? 'Success' : 'Failed'}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Timestamp:</small> ${timestamp}<br>
+                                    <small class="text-muted">Category:</small> ${log.category || 'N/A'}<br>
+                                    <small class="text-muted">Playbooks:</small> ${log.playbooks ? log.playbooks.join(', ') : 'N/A'}
+                                </div>
+                                <div class="col-md-6">
+                                    ${log.results ? `
+                                        <small class="text-muted">Results:</small><br>
+                                        ${log.results.map(r => `
+                                            <span class="badge bg-${r.success ? 'success' : 'danger'} me-1">${r.playbook}</span>
+                                        `).join('')}
+                                    ` : ''}
+                                </div>
+                            </div>
+                            ${log.error ? `<div class="alert alert-warning mt-2"><small>${log.error}</small></div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function displayProcessLogs(logs, container) {
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="text-muted">No process logs found</div>';
+                return;
+            }
+            
+            let html = '';
+            logs.forEach(log => {
+                const timestamp = new Date(log.timestamp).toLocaleString();
+                const statusClass = log.status === 'completed' ? 'success' : 
+                                  log.status === 'failed' ? 'danger' : 'primary';
+                
+                html += `
+                    <div class="card mb-2">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${log.process_type || 'Unknown'}</strong> - ${log.process_id || 'N/A'}
+                                    <br><small class="text-muted">${timestamp}</small>
+                                </div>
+                                <span class="badge bg-${statusClass}">${log.status || 'Running'}</span>
+                            </div>
+                            ${log.events ? `
+                                <div class="mt-2">
+                                    <small class="text-muted">Events: ${log.events.length}</small>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function displaySystemLogs(logs, container) {
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="text-muted">No system logs found</div>';
+                return;
+            }
+            
+            let html = '<div class="log-entry">';
+            logs.forEach(line => {
+                // Basic log level detection and styling
+                let logClass = '';
+                if (line.includes('ERROR')) logClass = 'log-level-error';
+                else if (line.includes('WARNING')) logClass = 'log-level-warning';
+                else if (line.includes('INFO')) logClass = 'log-level-info';
+                else if (line.includes('DEBUG')) logClass = 'log-level-debug';
+                
+                html += `<div class="${logClass}">${escapeHtml(line)}</div>`;
+            });
+            html += '</div>';
+            
+            container.innerHTML = html;
+        }
+
+        function displaySearchResults(results, container) {
+            if (results.length === 0) {
+                container.innerHTML = '<div class="text-muted">No results found</div>';
+                return;
+            }
+            
+            let html = '';
+            results.forEach(result => {
+                const timestamp = new Date(result.timestamp).toLocaleString();
+                const logType = result.log_type || 'unknown';
+                
+                html += `
+                    <div class="card mb-2">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-info">${logType}</span>
+                                <small class="text-muted">${timestamp}</small>
+                            </div>
+                            <pre class="mb-0" style="font-size: 0.8rem; max-height: 200px; overflow-y: auto;">${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function refreshLogs() {
+            // Refresh the currently active tab
+            const activeTab = document.querySelector('.nav-link.active');
+            if (activeTab.id === 'execution-logs-tab') {
+                loadExecutionLogs();
+            } else if (activeTab.id === 'process-logs-tab') {
+                loadProcessLogs();
+            } else if (activeTab.id === 'system-logs-tab') {
+                loadSystemLogs();
+            }
+        }
+
+        function clearLogs() {
+            const activeTab = document.querySelector('.nav-link.active');
+            if (activeTab.id === 'execution-logs-tab') {
+                document.getElementById('executionLogsContainer').innerHTML = '<div class="text-muted">Logs cleared</div>';
+            } else if (activeTab.id === 'process-logs-tab') {
+                document.getElementById('processLogsContainer').innerHTML = '<div class="text-muted">Logs cleared</div>';
+            } else if (activeTab.id === 'system-logs-tab') {
+                document.getElementById('systemLogsContainer').innerHTML = '<div class="text-muted">Logs cleared</div>';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

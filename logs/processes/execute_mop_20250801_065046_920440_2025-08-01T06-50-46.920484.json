@@ -1,0 +1,24 @@
+{
+  "timestamp": "2025-08-01T06:50:46.920484",
+  "event_type": "process_start",
+  "process_type": "execute_mop",
+  "process_id": "execute_mop_20250801_065046_920440",
+  "metadata": {
+    "function_name": "execute_mop",
+    "args": "(<executor.MOPExecutor object at 0x7f40de4f7c90>, 'mop-wus2-agent-upgrade-001')",
+    "kwargs": "{}"
+  },
+  "status": "completed",
+  "events": [
+    {
+      "timestamp": "2025-08-01T06:50:49.391461",
+      "event_type": "process_end",
+      "process_id": "execute_mop_20250801_065046_920440",
+      "result": {
+        "result": "{'success': True, 'execution_id': 'mop-wus2-agent-upgrade-001_20250801_065046', 'results': [{'playbook': 'edit_yaml.yml', 'success': True, 'return_code': 0, 'output': '\\nPLAY [Edit YAML Configuration] ************************************************\\n\\nTASK [Backup existing configuration] *****************************************\\nchanged: [localhost]\\n\\nTASK [Update YAML values] *****************************************************\\nchanged: [localhost]\\n\\nTASK [Validate YAML syntax] **********"
+      },
+      "status": "completed"
+    }
+  ],
+  "last_updated": "2025-08-01T06:50:49.391461"
+}

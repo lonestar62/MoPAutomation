@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from renderer import MOPRenderer
 from category_map import CATEGORY_TO_PLAYBOOK
+from logger import log_process, mop_logger
 
 class MOPExecutor:
     """Handles MOP execution using mock Ansible playbooks"""
@@ -18,6 +19,7 @@ class MOPExecutor:
         # Ensure logs directory exists
         os.makedirs(logs_dir, exist_ok=True)
     
+    @log_process('execute_mop')
     def execute_mop(self, mop_id):
         """Execute a MOP by running associated playbooks"""
         timestamp = datetime.now().isoformat()
