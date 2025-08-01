@@ -61,11 +61,18 @@ class MOPExecutor:
             
             self.save_execution_log(execution_id, execution_log)
             
+            # Add error summary for failed executions
+            error_summary = None
+            if not overall_success:
+                failed_playbooks = [r for r in execution_results if not r['success']]
+                error_summary = f"Failed playbooks: {', '.join([p['playbook'] for p in failed_playbooks])}"
+            
             return {
                 'success': overall_success,
                 'execution_id': execution_id,
                 'results': execution_results,
-                'log_file': f"{execution_id}.json"
+                'log_file': f"{execution_id}.json",
+                'error': error_summary if not overall_success else None
             }
             
         except Exception as e:
@@ -206,7 +213,9 @@ localhost : ok=3    changed=2    unreachable=0    failed=0
             return_code = 0
             
         elif 'commit_to_git' in playbook_name:
-            success = random.choice([True, True, False])  # 66% success rate
+            # In development environment, sometimes git operations work, sometimes they fail
+            # This demonstrates both success and failure scenarios
+            success = random.choice([True, False])  # 50% success rate for demo
             if success:
                 output = f"""
 PLAY [Commit to Git Repository] ***********************************************

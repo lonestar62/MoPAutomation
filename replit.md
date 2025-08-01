@@ -6,6 +6,15 @@ This is a MOP (Method of Procedure) Automation Platform that automates the rende
 
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes
+
+## Next.js Frontend Integration (January 2025)
+- **Status**: Completed - Full Next.js frontend with TypeScript configuration
+- **Architecture**: Dual interface system with Flask backend API and Next.js frontend
+- **API Integration**: RESTful endpoints with proper proxy configuration
+- **Error Handling**: Improved execution error reporting with development environment considerations
+- **Demo Interface**: Created integration demo page showing system readiness
+
 # System Architecture
 
 ## Frontend Architecture

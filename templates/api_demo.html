@@ -198,7 +198,8 @@
                     <div class="alert alert-success">
                         <strong>✅ API Test Successful!</strong><br>
                         Found ${data.mops ? data.mops.length : 0} MOPs<br>
-                        Backend is fully operational and ready for Next.js integration.
+                        Backend is fully operational and ready for Next.js integration.<br>
+                        <small class="text-muted">Note: Some MOP executions may show partial failures due to simulated git credential issues in development environment. This is expected behavior for demonstration purposes.</small>
                     </div>
                 `;
             } catch (error) {
