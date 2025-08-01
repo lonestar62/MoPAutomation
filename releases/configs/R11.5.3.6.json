@@ -1,0 +1,749 @@
+{
+  "version": "R11.5.3.6",
+  "description": "Final release validation with all 25 vendor MOPs and 6 regional variable files",
+  "created_at": "2025-08-01T08:27:10.127310",
+  "created_by": "validation_test",
+  "mops": [
+    {
+      "id": "agent-upgrade-mop",
+      "name": "Agent Upgrade Mop",
+      "description": "MOP procedure: agent-upgrade-mop",
+      "mop_type": "agent-upgrade",
+      "template_path": "templates/vendor/agent-upgrade-mop.j2",
+      "variables_required": [
+        "backup_endpoint",
+        "value",
+        "pipeline_id",
+        "target_version",
+        "monitoring_endpoint",
+        "log_level",
+        "azure_region",
+        "agent_version",
+        "config_path",
+        "ado_organization",
+        "retention_days",
+        "resource_group",
+        "region_code",
+        "ado_project",
+        "generated_at",
+        "key_vault",
+        "target_group",
+        "region",
+        "template_source",
+        "key",
+        "primary_endpoint",
+        "environment"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 30,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "infrastructure-deployment",
+      "name": "Infrastructure Deployment",
+      "description": "MOP procedure: infrastructure-deployment",
+      "mop_type": "infrastructure",
+      "template_path": "templates/vendor/infrastructure-deployment.j2",
+      "variables_required": [
+        "pipeline_id",
+        "value",
+        "check",
+        "subscription_id",
+        "l1_contact",
+        "azure_region",
+        "l2_contact",
+        "ado_organization",
+        "monitoring_subnet",
+        "deployment_type",
+        "vnet_cidr",
+        "resource_group",
+        "regional_lead",
+        "db_subnet",
+        "generated_at",
+        "key_vault",
+        "l3_contact",
+        "web_subnet",
+        "region",
+        "component",
+        "sre_contact",
+        "devops_engineer",
+        "template_source",
+        "key",
+        "environment"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 30,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "network-security-config",
+      "name": "Network Security Configuration",
+      "description": "Configure network security groups and firewall rules",
+      "mop_type": "network",
+      "template_path": "templates/vendor/network-security-config.j2",
+      "variables_required": [
+        "generated_at",
+        "azure_region",
+        "web_subnet",
+        "resource_group",
+        "region",
+        "vpn_subnet",
+        "template_source",
+        "ado_organization",
+        "environment"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 45,
+      "dependencies": [],
+      "risk_level": "high",
+      "approval_required": true
+    },
+    {
+      "id": "database-maintenance",
+      "name": "Database Maintenance",
+      "description": "Perform routine database maintenance and optimization",
+      "mop_type": "backup",
+      "template_path": "templates/vendor/database-maintenance.j2",
+      "variables_required": [
+        "devops_contact",
+        "app_team_contact",
+        "stats_update_time",
+        "cleanup_time",
+        "generated_at",
+        "azure_region",
+        "dba_contact",
+        "resource_group",
+        "region",
+        "database_name",
+        "template_source",
+        "index_rebuild_time",
+        "data_retention_days",
+        "table",
+        "environment"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 60,
+      "dependencies": [
+        "backup-verification"
+      ],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "patch-linux-systems",
+      "name": "Linux System Patching",
+      "description": "Apply security and system patches to Linux servers",
+      "mop_type": "patch-linux",
+      "template_path": "templates/vendor/patch-linux-systems.j2",
+      "variables_required": [
+        "security_contact",
+        "app_team_contact",
+        "generated_at",
+        "azure_region",
+        "group",
+        "sysadmin_contact",
+        "maintenance_window",
+        "region",
+        "template_source",
+        "patch_category",
+        "oncall_contact",
+        "ado_organization",
+        "environment"
+      ],
+      "playbooks": [
+        "patch_linux.yml"
+      ],
+      "estimated_duration": 90,
+      "dependencies": [
+        "backup-verification"
+      ],
+      "risk_level": "high",
+      "approval_required": true
+    },
+    {
+      "id": "monitoring-config",
+      "name": "Monitoring Configuration",
+      "description": "Configure monitoring dashboards and alerting rules",
+      "mop_type": "monitoring",
+      "template_path": "templates/vendor/monitoring-config.j2",
+      "variables_required": [
+        "generated_at",
+        "azure_region",
+        "region",
+        "template_source",
+        "environment"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 40,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "backup-config",
+      "name": "Backup Configuration",
+      "description": "Configure automated backup systems and retention policies",
+      "mop_type": "backup",
+      "template_path": "templates/vendor/backup-config.j2",
+      "variables_required": [
+        "generated_at",
+        "azure_region",
+        "region",
+        "backup_retention_days",
+        "template_source",
+        "app_data_path",
+        "environment"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 35,
+      "dependencies": [
+        "database-maintenance"
+      ],
+      "risk_level": "high",
+      "approval_required": true
+    },
+    {
+      "id": "ssl-certificate-renewal",
+      "name": "SSL Certificate Renewal",
+      "description": "Renew and deploy SSL certificates across services",
+      "mop_type": "network",
+      "template_path": "templates/vendor/ssl-certificate-renewal.j2",
+      "variables_required": [
+        "generated_at",
+        "ssl_domains",
+        "azure_region",
+        "region",
+        "template_source",
+        "environment",
+        "ansible_fqdn"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 25,
+      "dependencies": [],
+      "risk_level": "high",
+      "approval_required": true
+    },
+    {
+      "id": "log-rotation-config",
+      "name": "Log Rotation Configuration",
+      "description": "Configure log rotation policies and cleanup procedures",
+      "mop_type": "infrastructure",
+      "template_path": "templates/vendor/log-rotation-config.j2",
+      "variables_required": [
+        "app_log_path",
+        "generated_at",
+        "log_compression",
+        "azure_region",
+        "log_retention_days",
+        "region",
+        "template_source",
+        "environment"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 20,
+      "dependencies": [],
+      "risk_level": "low",
+      "approval_required": false
+    },
+    {
+      "id": "firewall-rules-update",
+      "name": "Firewall Rules Update",
+      "description": "Update firewall rules and security policies",
+      "mop_type": "network",
+      "template_path": "templates/vendor/firewall-rules-update.j2",
+      "variables_required": [
+        "generated_at",
+        "mgmt_subnet",
+        "hostvars",
+        "azure_region",
+        "firewall_rule_version",
+        "resource_group",
+        "region",
+        "template_source",
+        "firewall_type",
+        "app_subnet",
+        "environment",
+        "db_subnet"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 50,
+      "dependencies": [
+        "network-security-config"
+      ],
+      "risk_level": "high",
+      "approval_required": true
+    },
+    {
+      "id": "user-management",
+      "name": "User Management",
+      "description": "Manage user accounts and access permissions",
+      "mop_type": "infrastructure",
+      "template_path": "templates/vendor/user-management.j2",
+      "variables_required": [
+        "generated_at",
+        "lockout_duration",
+        "azure_region",
+        "monitoring_ssh_key",
+        "password_max_days",
+        "region",
+        "directory_service",
+        "backup_ssh_key",
+        "template_source",
+        "user",
+        "lockout_attempts",
+        "password_min_length",
+        "user_groups",
+        "environment"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 30,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "performance-tuning",
+      "name": "Performance Tuning",
+      "description": "Optimize system and application performance parameters",
+      "mop_type": "database",
+      "template_path": "templates/vendor/performance-tuning.j2",
+      "variables_required": [
+        "vm_dirty_background_ratio",
+        "db_connection_timeout",
+        "db_max_connections",
+        "gc_pause_target",
+        "jvm_heap_max",
+        "db_pool_size",
+        "gc_region_size",
+        "tuning_category",
+        "performance_target",
+        "db_query_cache_size",
+        "jvm_heap_min",
+        "azure_region",
+        "net_rmem_max",
+        "vm_dirty_ratio",
+        "vm_swappiness",
+        "net_wmem_max",
+        "vm_overcommit_memory",
+        "db_buffer_pool_size",
+        "generated_at",
+        "nginx_worker_connections",
+        "region",
+        "ansible_processor_vcpus",
+        "template_source",
+        "environment",
+        "critical_tables"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 45,
+      "dependencies": [
+        "monitoring-config"
+      ],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "dns-config",
+      "name": "DNS Configuration",
+      "description": "Update DNS records and configuration",
+      "mop_type": "network",
+      "template_path": "templates/vendor/dns-config.j2",
+      "variables_required": [
+        "generated_at",
+        "azure_region",
+        "web_ip",
+        "api_ip",
+        "dns_provider",
+        "resource_group",
+        "region",
+        "dns_zone",
+        "template_source"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 25,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "load-balancer-config",
+      "name": "Load Balancer Configuration",
+      "description": "Configure load balancer rules and health checks",
+      "mop_type": "network",
+      "template_path": "templates/vendor/load-balancer-config.j2",
+      "variables_required": [
+        "server",
+        "generated_at",
+        "azure_region",
+        "region",
+        "template_source",
+        "server_name"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 35,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "storage-config",
+      "name": "Storage Configuration",
+      "description": "Configure storage volumes and mounting",
+      "mop_type": "infrastructure",
+      "template_path": "templates/vendor/storage-config.j2",
+      "variables_required": [
+        "storage_group",
+        "mount_point",
+        "generated_at",
+        "azure_region",
+        "storage_owner",
+        "region",
+        "template_source",
+        "storage_filesystem",
+        "storage_device"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 40,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "service-discovery",
+      "name": "Service Discovery",
+      "description": "Configure service discovery and registration",
+      "mop_type": "infrastructure",
+      "template_path": "templates/vendor/service-discovery.j2",
+      "variables_required": [
+        "generated_at",
+        "azure_region",
+        "registration_method",
+        "region",
+        "template_source",
+        "discovery_service"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 30,
+      "dependencies": [],
+      "risk_level": "low",
+      "approval_required": false
+    },
+    {
+      "id": "secrets-management",
+      "name": "Secrets Management",
+      "description": "Update and rotate secrets and API keys",
+      "mop_type": "infrastructure",
+      "template_path": "templates/vendor/secrets-management.j2",
+      "variables_required": [
+        "generated_at",
+        "rotation_schedule",
+        "azure_region",
+        "ssl_cert_path",
+        "ssl_key_path",
+        "region",
+        "template_source"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 45,
+      "dependencies": [],
+      "risk_level": "high",
+      "approval_required": true
+    },
+    {
+      "id": "container-deployment",
+      "name": "Container Deployment",
+      "description": "Deploy and update containerized applications",
+      "mop_type": "infrastructure",
+      "template_path": "templates/vendor/container-deployment.j2",
+      "variables_required": [
+        "registry_username",
+        "generated_at",
+        "database_url",
+        "azure_region",
+        "image_version",
+        "container_registry",
+        "region",
+        "api_key",
+        "template_source",
+        "registry_password"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 50,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "api-gateway-config",
+      "name": "API Gateway Configuration",
+      "description": "Configure API gateway routing and policies",
+      "mop_type": "infrastructure",
+      "template_path": "templates/vendor/api-gateway-config.j2",
+      "variables_required": [
+        "generated_at",
+        "cors_origin",
+        "azure_region",
+        "region",
+        "api_version",
+        "template_source"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 35,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": true
+    },
+    {
+      "id": "cache-config",
+      "name": "Cache Configuration",
+      "description": "Configure Redis cache and caching policies",
+      "mop_type": "infrastructure",
+      "template_path": "templates/vendor/cache-config.j2",
+      "variables_required": [
+        "cache_type",
+        "eviction_policy",
+        "generated_at",
+        "azure_region",
+        "region",
+        "cache_size",
+        "template_source"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 30,
+      "dependencies": [],
+      "risk_level": "low",
+      "approval_required": false
+    },
+    {
+      "id": "queue-management",
+      "name": "Queue Management",
+      "description": "Configure message queues and processing",
+      "mop_type": "infrastructure",
+      "template_path": "templates/vendor/queue-management.j2",
+      "variables_required": [
+        "queue_system",
+        "generated_at",
+        "azure_region",
+        "queue",
+        "region",
+        "template_source",
+        "queue_count",
+        "environment"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 35,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": false
+    },
+    {
+      "id": "disaster-recovery-test",
+      "name": "Disaster Recovery Test",
+      "description": "Test disaster recovery procedures and failover",
+      "mop_type": "network",
+      "template_path": "templates/vendor/disaster-recovery-test.j2",
+      "variables_required": [
+        "rpo_achieved",
+        "test_type",
+        "rpo_target",
+        "generated_at",
+        "azure_region",
+        "dr_region",
+        "primary_web_ip",
+        "resource_group",
+        "issues_found",
+        "region",
+        "dns_zone",
+        "rto_target",
+        "test_duration",
+        "template_source",
+        "dr_web_ip",
+        "recommendations",
+        "rto_achieved"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 120,
+      "dependencies": [
+        "backup-config"
+      ],
+      "risk_level": "high",
+      "approval_required": true
+    },
+    {
+      "id": "config-management",
+      "name": "Configuration Management",
+      "description": "Update system and application configurations",
+      "mop_type": "network",
+      "template_path": "templates/vendor/config-management.j2",
+      "variables_required": [
+        "ip_forward",
+        "generated_at",
+        "config_tool",
+        "config_version",
+        "azure_region",
+        "region",
+        "template_source"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 25,
+      "dependencies": [],
+      "risk_level": "medium",
+      "approval_required": false
+    },
+    {
+      "id": "vulnerability-scan",
+      "name": "Vulnerability Scan",
+      "description": "Run security vulnerability scans and remediation",
+      "mop_type": "security",
+      "template_path": "templates/vendor/vulnerability-scan.j2",
+      "variables_required": [
+        "ansible_date_time",
+        "generated_at",
+        "compliance_scan",
+        "azure_region",
+        "scanner_target",
+        "region",
+        "scanner_tool",
+        "scan_type",
+        "template_source",
+        "compliance_profile"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 90,
+      "dependencies": [],
+      "risk_level": "low",
+      "approval_required": false
+    },
+    {
+      "id": "compliance-audit",
+      "name": "Compliance Audit",
+      "description": "Run compliance checks and generate audit reports",
+      "mop_type": "security",
+      "template_path": "templates/vendor/compliance-audit.j2",
+      "variables_required": [
+        "generated_at",
+        "azure_region",
+        "compliance_framework",
+        "audit_date",
+        "region",
+        "template_source"
+      ],
+      "playbooks": [
+        "edit_yaml.yml",
+        "commit_to_git.yml",
+        "run_manual_pipeline.yml"
+      ],
+      "estimated_duration": 60,
+      "dependencies": [],
+      "risk_level": "low",
+      "approval_required": false
+    }
+  ],
+  "execution_order": [
+    "eus2",
+    "wus2",
+    "wus3",
+    "scus",
+    "eus2lea",
+    "wus2lea"
+  ],
+  "status": "pending",
+  "current_region": null,
+  "current_mop": null
+}

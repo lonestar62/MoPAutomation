@@ -1,0 +1,190 @@
+# WUS2LEA (West US 2 LEA) Production Variables
+# Early Access region for west coast testing
+
+# Region Configuration
+region: wus2lea
+azure_region: westus2euap
+environment: wus2lea-production
+is_lea_region: true
+is_primary_region: false
+
+# Azure Infrastructure
+resource_group: rg-prod-wus2lea
+subscription_id: "{ vault_wus2lea_subscription_id }"
+ado_organization: "{ vault_wus2lea_ado_organization }"
+pipeline_id: "{ vault_wus2lea_pipeline_id }"
+
+# Network Configuration
+vnet_name: vnet-prod-wus2lea
+vnet_address_space: 10.5.0.0/16
+web_subnet: 10.5.1.0/24
+app_subnet: 10.5.2.0/24
+db_subnet: 10.5.3.0/24
+mgmt_subnet: 10.5.100.0/24
+vpn_subnet: 10.5.200.0/24
+
+# Service Configuration
+web_ip: 10.5.1.10
+api_ip: 10.5.1.20
+db_ip: 10.5.3.10
+lb_ip: 10.5.1.5
+
+# Application Configuration
+app_data_path: /opt/app/data
+database_name: ProductionDB
+database_url: "mysql://appuser:{{ vault_wus2lea_db_password }}@{{ db_ip }}:3306/ProductionDB"
+api_key: "{{ vault_wus2lea_api_key }}"
+
+# Storage Configuration
+storage_account: storagewus2leaprod
+storage_device: sdb1
+storage_filesystem: ext4
+mount_point: /opt/data
+storage_owner: appuser
+storage_group: appgroup
+
+# Security Configuration
+ssl_domains:
+  - "*.wus2lea.example.com"
+  - "api-wus2lea.example.com"
+  - "app-wus2lea.example.com"
+ssl_cert_path: /etc/ssl/certs/wus2lea-server.crt
+ssl_key_path: /etc/ssl/private/wus2lea-server.key
+
+# Performance Configuration (Conservative for Early Access)
+nginx_worker_connections: 2048
+db_buffer_pool_size: 2G
+db_max_connections: 250
+db_query_cache_size: 256M
+jvm_heap_min: 2g
+jvm_heap_max: 4g
+db_pool_size: 50
+
+# Backup Configuration (Enhanced for Early Access)
+backup_retention_days: 180
+backup_storage_account: backupwus2leaprod
+data_retention_days: 180
+cleanup_enabled: false
+shrink_logs: false
+
+# Monitoring Configuration (Enhanced for Early Access)
+monitoring_retention_days: 60
+alert_email: alerts-wus2lea@example.com
+monitoring_ssh_key: "{{ vault_wus2lea_monitoring_ssh_key }}"
+backup_ssh_key: "{{ vault_wus2lea_backup_ssh_key }}"
+
+# DNS Configuration
+dns_provider: Azure DNS
+dns_zone: wus2lea.example.com
+server_name: app-wus2lea.example.com
+
+# Cache Configuration
+cache_type: Redis
+cache_size: 2gb
+eviction_policy: allkeys-lru
+
+# Container Configuration
+container_registry: acrwus2leaprod.azurecr.io
+image_version: "1.3.0-preview"
+registry_username: "{{ vault_wus2lea_acr_username }}"
+registry_password: "{{ vault_wus2lea_acr_password }}"
+
+# Queue Configuration
+queue_system: RabbitMQ
+queue_count: 6
+queues:
+  - email
+  - notification
+  - processing
+  - audit
+  - backup
+  - preview-features
+
+# Compliance Configuration
+compliance_framework: SOC2 + ISO27001 + PCI-DSS + Early Access
+audit_date: "2025-08-01"
+password_max_days: 60
+password_min_length: 16
+lockout_attempts: 2
+lockout_duration: 3600
+
+# Performance Tuning (Conservative)
+tuning_category: Early Access + Stability
+performance_target: Stability over performance
+net_rmem_max: 134217728
+net_wmem_max: 134217728
+vm_dirty_ratio: 15
+vm_dirty_background_ratio: 5
+vm_swappiness: 10
+vm_overcommit_memory: 0
+
+# Log Configuration (Enhanced for Early Access)
+log_retention_days: 60
+log_compression: gzip
+app_log_path: /opt/app/logs
+
+# Firewall Configuration
+firewall_type: iptables + Azure NSG
+firewall_rule_version: "2.3.0-preview"
+
+# Service Discovery
+discovery_service: Consul
+registration_method: Automatic
+
+# Secrets Management
+rotation_schedule: Monthly
+
+# Critical Tables for Database Maintenance
+critical_tables:
+  - Users
+  - Orders
+  - Products
+  - Transactions
+  - AuditLog
+  - Sessions
+  - PreviewFeatures
+  - EarlyAccessLogs
+
+# Backend Servers for Load Balancer (Fewer for Early Access)
+backend_servers:
+  - 10.5.1.10
+  - 10.5.1.11
+
+# Operational Users
+operational_users:
+  - name: alex.admin
+    groups: [operators, dbadmins, early-access]
+  - name: zoe.dev
+    groups: [developers, early-access]
+  - name: max.ops
+    groups: [operators, early-access]
+
+# Contact Information
+dba_contact: dba-wus2lea@example.com
+devops_contact: devops-wus2lea@example.com
+app_team_contact: appteam-wus2lea@example.com
+security_contact: security-wus2lea@example.com
+sysadmin_contact: sysadmin-wus2lea@example.com
+oncall_contact: oncall-wus2lea@example.com
+
+# Early Access Configuration
+early_access_config:
+  feature_flags_enabled: true
+  preview_apis_enabled: true
+  enhanced_logging: true
+  extended_monitoring: true
+  feedback_collection: true
+  product_team_access: true
+
+# Scanner Configuration for Vulnerability Scan
+scanner_target: 10.5.0.0/16
+
+# Region-Specific Features
+features:
+  early_access: true
+  preview_features: true
+  enhanced_monitoring: true
+  extended_logging: true
+  feedback_collection: true
+  product_team_integration: true
+  west_coast_early_access: true

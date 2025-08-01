@@ -9,6 +9,7 @@ from category_map import CATEGORY_TO_PLAYBOOK
 from logger import MOPLogger, log_process, mop_logger
 from docs_renderer import render_documentation, DocumentationRenderer
 from release_manager import MOPReleaseManager, create_release_from_vendor_mops
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -502,18 +503,18 @@ def api_create_release():
         data = request.get_json()
         vendor_dir = data.get('vendor_dir', 'templates/vendor')
         release_version = data.get('release_version')
-        variables_file = data.get('variables_file')
+        variables_file_set = data.get('variables_file_set', 'regional-production')
         description = data.get('description', '')
         created_by = data.get('created_by', 'api_user')
         
-        if not release_version or not variables_file:
+        if not release_version:
             return jsonify({
                 'success': False,
-                'error': 'release_version and variables_file are required'
+                'error': 'release_version is required'
             }), 400
         
         result = create_release_from_vendor_mops(
-            vendor_dir, release_version, variables_file, description, created_by
+            vendor_dir, release_version, variables_file_set, description, created_by
         )
         
         return jsonify(result)

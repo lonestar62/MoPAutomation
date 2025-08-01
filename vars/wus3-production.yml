@@ -1,0 +1,187 @@
+# WUS3 (West US 3) Production Variables
+# Modern infrastructure region
+
+# Region Configuration
+region: wus3
+azure_region: westus3
+environment: wus3-production
+is_lea_region: false
+is_primary_region: false
+
+# Azure Infrastructure
+resource_group: rg-prod-wus3
+subscription_id: "{ vault_wus3_subscription_id }"
+ado_organization: "{ vault_wus3_ado_organization }"
+pipeline_id: "{ vault_wus3_pipeline_id }"
+
+# Network Configuration
+vnet_name: vnet-prod-wus3
+vnet_address_space: 10.2.0.0/16
+web_subnet: 10.2.1.0/24
+app_subnet: 10.2.2.0/24
+db_subnet: 10.2.3.0/24
+mgmt_subnet: 10.2.100.0/24
+vpn_subnet: 10.2.200.0/24
+
+# Service Configuration
+web_ip: 10.2.1.10
+api_ip: 10.2.1.20
+db_ip: 10.2.3.10
+lb_ip: 10.2.1.5
+
+# Application Configuration
+app_data_path: /opt/app/data
+database_name: ProductionDB
+database_url: "mysql://appuser:{{ vault_wus3_db_password }}@{{ db_ip }}:3306/ProductionDB"
+api_key: "{{ vault_wus3_api_key }}"
+
+# Storage Configuration
+storage_account: storagewus3prod
+storage_device: nvme0n1p1
+storage_filesystem: xfs
+mount_point: /opt/data
+storage_owner: appuser
+storage_group: appgroup
+
+# Security Configuration
+ssl_domains:
+  - "*.wus3.example.com"
+  - "api-wus3.example.com"
+  - "app-wus3.example.com"
+ssl_cert_path: /etc/ssl/certs/wus3-server.crt
+ssl_key_path: /etc/ssl/private/wus3-server.key
+
+# Performance Configuration (Enhanced for modern infrastructure)
+nginx_worker_connections: 8192
+db_buffer_pool_size: 8G
+db_max_connections: 750
+db_query_cache_size: 1G
+jvm_heap_min: 6g
+jvm_heap_max: 12g
+db_pool_size: 100
+
+# Backup Configuration
+backup_retention_days: 90
+backup_storage_account: backupwus3prod
+data_retention_days: 365
+cleanup_enabled: true
+shrink_logs: false
+
+# Monitoring Configuration
+monitoring_retention_days: 30
+alert_email: alerts-wus3@example.com
+monitoring_ssh_key: "{{ vault_wus3_monitoring_ssh_key }}"
+backup_ssh_key: "{{ vault_wus3_backup_ssh_key }}"
+
+# DNS Configuration
+dns_provider: Azure DNS
+dns_zone: wus3.example.com
+server_name: app-wus3.example.com
+
+# Cache Configuration (Enhanced)
+cache_type: Redis
+cache_size: 8gb
+eviction_policy: allkeys-lru
+
+# Container Configuration
+container_registry: acrwus3prod.azurecr.io
+image_version: "1.2.0"
+registry_username: "{{ vault_wus3_acr_username }}"
+registry_password: "{{ vault_wus3_acr_password }}"
+
+# Queue Configuration
+queue_system: RabbitMQ
+queue_count: 12
+queues:
+  - email
+  - notification
+  - processing
+  - audit
+  - backup
+  - reports
+  - integration
+  - analytics
+  - ml-training
+  - data-pipeline
+  - real-time
+  - streaming
+
+# Compliance Configuration
+compliance_framework: SOC2 + ISO27001 + PCI-DSS
+audit_date: "2025-08-01"
+password_max_days: 90
+password_min_length: 14
+lockout_attempts: 3
+lockout_duration: 1800
+
+# Performance Tuning (Optimized for modern hardware)
+tuning_category: High-Performance + Modern Infrastructure
+performance_target: 40% improvement
+net_rmem_max: 536870912
+net_wmem_max: 536870912
+vm_dirty_ratio: 5
+vm_dirty_background_ratio: 2
+vm_swappiness: 1
+vm_overcommit_memory: 1
+
+# Log Configuration
+log_retention_days: 30
+log_compression: zstd
+app_log_path: /opt/app/logs
+
+# Firewall Configuration
+firewall_type: iptables + Azure NSG
+firewall_rule_version: "2.3.0"
+
+# Service Discovery
+discovery_service: Consul
+registration_method: Automatic
+
+# Secrets Management
+rotation_schedule: Quarterly
+
+# Critical Tables for Database Maintenance
+critical_tables:
+  - Users
+  - Orders
+  - Products
+  - Transactions
+  - AuditLog
+  - Sessions
+  - Analytics
+  - MachineLearning
+
+# Backend Servers for Load Balancer (More servers for modern region)
+backend_servers:
+  - 10.2.1.10
+  - 10.2.1.11
+  - 10.2.1.12
+  - 10.2.1.13
+  - 10.2.1.14
+
+# Operational Users
+operational_users:
+  - name: alex.admin
+    groups: [operators, dbadmins]
+  - name: emma.dev
+    groups: [developers]
+  - name: chris.ops
+    groups: [operators]
+  - name: maya.ml
+    groups: [developers, ml-engineers]
+
+# Contact Information
+dba_contact: dba-wus3@example.com
+devops_contact: devops-wus3@example.com
+app_team_contact: appteam-wus3@example.com
+security_contact: security-wus3@example.com
+sysadmin_contact: sysadmin-wus3@example.com
+oncall_contact: oncall-wus3@example.com
+
+# Region-Specific Features
+features:
+  modern_infrastructure: true
+  high_performance: true
+  ml_workloads: true
+  streaming_analytics: true
+  gpu_acceleration: true

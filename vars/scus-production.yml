@@ -1,0 +1,195 @@
+# SCUS (South Central US) Production Variables
+# Central hub region
+
+# Region Configuration
+region: scus
+azure_region: southcentralus
+environment: scus-production
+is_lea_region: false
+is_primary_region: false
+
+# Azure Infrastructure
+resource_group: rg-prod-scus
+subscription_id: "{ vault_scus_subscription_id }"
+ado_organization: "{ vault_scus_ado_organization }"
+pipeline_id: "{ vault_scus_pipeline_id }"
+
+# Network Configuration
+vnet_name: vnet-prod-scus
+vnet_address_space: 10.3.0.0/16
+web_subnet: 10.3.1.0/24
+app_subnet: 10.3.2.0/24
+db_subnet: 10.3.3.0/24
+mgmt_subnet: 10.3.100.0/24
+vpn_subnet: 10.3.200.0/24
+
+# Service Configuration
+web_ip: 10.3.1.10
+api_ip: 10.3.1.20
+db_ip: 10.3.3.10
+lb_ip: 10.3.1.5
+
+# Application Configuration
+app_data_path: /opt/app/data
+database_name: ProductionDB
+database_url: "mysql://appuser:{{ vault_scus_db_password }}@{{ db_ip }}:3306/ProductionDB"
+api_key: "{{ vault_scus_api_key }}"
+
+# Storage Configuration
+storage_account: storagescusprod
+storage_device: sdb1
+storage_filesystem: ext4
+mount_point: /opt/data
+storage_owner: appuser
+storage_group: appgroup
+
+# Security Configuration
+ssl_domains:
+  - "*.scus.example.com"
+  - "api-scus.example.com"
+  - "app-scus.example.com"
+ssl_cert_path: /etc/ssl/certs/scus-server.crt
+ssl_key_path: /etc/ssl/private/scus-server.key
+
+# Performance Configuration
+nginx_worker_connections: 4096
+db_buffer_pool_size: 4G
+db_max_connections: 500
+db_query_cache_size: 512M
+jvm_heap_min: 4g
+jvm_heap_max: 8g
+db_pool_size: 75
+
+# Backup Configuration
+backup_retention_days: 90
+backup_storage_account: backupscusprod
+data_retention_days: 365
+cleanup_enabled: true
+shrink_logs: false
+
+# Monitoring Configuration
+monitoring_retention_days: 30
+alert_email: alerts-scus@example.com
+monitoring_ssh_key: "{{ vault_scus_monitoring_ssh_key }}"
+backup_ssh_key: "{{ vault_scus_backup_ssh_key }}"
+
+# DNS Configuration
+dns_provider: Azure DNS
+dns_zone: scus.example.com
+server_name: app-scus.example.com
+
+# Cache Configuration
+cache_type: Redis
+cache_size: 4gb
+eviction_policy: allkeys-lru
+
+# Container Configuration
+container_registry: acrscusprod.azurecr.io
+image_version: "1.2.0"
+registry_username: "{{ vault_scus_acr_username }}"
+registry_password: "{{ vault_scus_acr_password }}"
+
+# Queue Configuration
+queue_system: RabbitMQ
+queue_count: 10
+queues:
+  - email
+  - notification
+  - processing
+  - audit
+  - backup
+  - reports
+  - integration
+  - analytics
+  - hub-coordination
+  - cross-region
+
+# Compliance Configuration
+compliance_framework: SOC2 + ISO27001 + PCI-DSS
+audit_date: "2025-08-01"
+password_max_days: 90
+password_min_length: 14
+lockout_attempts: 3
+lockout_duration: 1800
+
+# Performance Tuning
+tuning_category: Hub + Integration + Coordination
+performance_target: 25% improvement
+net_rmem_max: 268435456
+net_wmem_max: 268435456
+vm_dirty_ratio: 10
+vm_dirty_background_ratio: 3
+vm_swappiness: 5
+vm_overcommit_memory: 1
+
+# Log Configuration
+log_retention_days: 30
+log_compression: gzip
+app_log_path: /opt/app/logs
+
+# Firewall Configuration
+firewall_type: iptables + Azure NSG
+firewall_rule_version: "2.2.0"
+
+# Service Discovery
+discovery_service: Consul
+registration_method: Automatic
+
+# Secrets Management
+rotation_schedule: Quarterly
+
+# Critical Tables for Database Maintenance
+critical_tables:
+  - Users
+  - Orders
+  - Products
+  - Transactions
+  - AuditLog
+  - Sessions
+  - CrossRegionSync
+  - HubCoordination
+
+# Backend Servers for Load Balancer
+backend_servers:
+  - 10.3.1.10
+  - 10.3.1.11
+  - 10.3.1.12
+
+# Operational Users
+operational_users:
+  - name: david.admin
+    groups: [operators, dbadmins]
+  - name: kate.dev
+    groups: [developers]
+  - name: ryan.ops
+    groups: [operators]
+  - name: anna.integration
+    groups: [operators, integration-team]
+
+# Contact Information
+dba_contact: dba-scus@example.com
+devops_contact: devops-scus@example.com
+app_team_contact: appteam-scus@example.com
+security_contact: security-scus@example.com
+sysadmin_contact: sysadmin-scus@example.com
+oncall_contact: oncall-scus@example.com
+
+# Hub Configuration
+hub_config:
+  coordinate_regions:
+    - eus2
+    - wus2
+    - wus3
+    - eus2lea
+    - wus2lea
+  sync_interval: 300
+  health_check_interval: 60
+  failover_threshold: 3
+
+# Region-Specific Features
+features:
+  central_hub: true
+  cross_region_coordination: true
+  integration_testing: true
+  data_aggregation: true
+  regional_monitoring: true

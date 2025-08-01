@@ -332,9 +332,9 @@ class MOPReleaseManager:
         
         return ReleaseDefinition(**data)
     
-    def render_release_documentation(self, release_version: str, variables_file: str) -> Dict[str, Any]:
-        """Render all MOPs in a release to versioned documentation folders"""
-        self.logger.log_system(f"Rendering documentation for release {release_version}", "render_release_docs")
+    def render_release_documentation(self, release_version: str, variables_file_set: str) -> Dict[str, Any]:
+        """Render all MOPs in a release to versioned documentation folders using regional variable files"""
+        self.logger.log_system(f"Rendering documentation for release {release_version} with regional variables", "render_release_docs")
         
         release = self.load_release_definition(release_version)
         
@@ -349,8 +349,15 @@ class MOPReleaseManager:
         rendered_results = {}
         doc_renderer = DocumentationRenderer()
         
-        # Load variables
-        variables = doc_renderer.load_mop_variables(variables_file)
+        # Regional variable file mapping
+        regional_var_files = {
+            'eus2': 'eus2-production.yml',
+            'wus2': 'wus2-production.yml', 
+            'wus3': 'wus3-production.yml',
+            'scus': 'scus-production.yml',
+            'eus2lea': 'eus2lea-production.yml',
+            'wus2lea': 'wus2lea-production.yml'
+        }
         
         for mop in release.mops:
             try:
@@ -361,11 +368,15 @@ class MOPReleaseManager:
                 
                 mop_results = {}
                 
-                # Render for each region
+                # Render for each region with regional variables
                 for region in self.execution_order:
                     try:
+                        # Load region-specific variables
+                        regional_var_file = regional_var_files.get(region, f"{region}-production.yml")
+                        regional_variables = doc_renderer.load_mop_variables(regional_var_file)
+                        
                         rendered_content = doc_renderer.render_template_for_region(
-                            template_path, region, variables
+                            template_path, region, regional_variables
                         )
                         
                         # Save to regional folder
@@ -509,7 +520,7 @@ class MOPReleaseManager:
         return releases
 
 def create_release_from_vendor_mops(vendor_dir: str, release_version: str, 
-                                   variables_file: str, description: str = "", 
+                                   variables_file_set: str, description: str = "", 
                                    created_by: str = "system") -> Dict[str, Any]:
     """Main function to create and render a complete MOP release"""
     manager = MOPReleaseManager()
@@ -519,7 +530,7 @@ def create_release_from_vendor_mops(vendor_dir: str, release_version: str,
         release = manager.process_vendor_mops(vendor_dir, release_version, description, created_by)
         
         # Render documentation
-        render_result = manager.render_release_documentation(release_version, variables_file)
+        render_result = manager.render_release_documentation(release_version, variables_file_set)
         
         return {
             "success": True,

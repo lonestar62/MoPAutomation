@@ -18,7 +18,7 @@ Compliance audit procedure for **{{ azure_region }}** region.
 
 - **Target Region**: {{ region.upper() }} ({{ azure_region }})
 - **Compliance Framework**: {{ compliance_framework | default('SOC2 + ISO27001') }}
-- **Audit Date**: {{ audit_date | default(ansible_date_time.date) }}
+- **Audit Date**: {{ audit_date | default('2025-08-01') }}
 
 ## Security Compliance
 
@@ -95,7 +95,7 @@ ansible {{ region }}_all -m shell -a "
 # Generate compliance report
 ansible {{ region }}_all -m template -a "
   src=compliance-report.j2
-  dest=/tmp/compliance-report-{{ region }}-{{ ansible_date_time.date }}.html
+  dest=/tmp/compliance-report-{{ region }}-{{ audit_date | default('2025-08-01') }}.html
 "
 ```
 
