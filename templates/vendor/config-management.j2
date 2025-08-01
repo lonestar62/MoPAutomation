@@ -1,0 +1,81 @@
+{# METADATA:
+id: config-management
+name: Configuration Management
+description: Update system and application configurations
+estimated_duration: 25
+risk_level: medium
+approval_required: false
+dependencies: []
+#}
+
+# Configuration Management - {{ region.upper() }}
+
+## Overview
+
+Configuration management procedure for **{{ azure_region }}** region.
+
+### Configuration Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Config Version**: {{ config_version | default('2.1.0') }}
+- **Management Tool**: {{ config_tool | default('Ansible') }}
+
+## System Configuration
+
+### Network Configuration
+```bash
+# Update network settings
+ansible {{ region }}_all -m lineinfile -a "
+  dest=/etc/sysctl.conf
+  regexp='^net.ipv4.ip_forward'
+  line='net.ipv4.ip_forward = {{ ip_forward | default(0) }}'
+"
+
+# Update DNS configuration
+ansible {{ region }}_all -m template -a "
+  src=resolv.conf.j2
+  dest=/etc/resolv.conf
+"
+```
+
+### Time Synchronization
+```bash
+# Configure NTP
+ansible {{ region }}_all -m template -a "
+  src=ntp.conf.j2
+  dest=/etc/ntp.conf
+"
+
+ansible {{ region }}_all -m systemd -a "name=ntp state=restarted"
+```
+
+## Application Configuration
+
+### Environment Variables
+```bash
+# Update application environment
+ansible {{ region }}_app -m template -a "
+  src=app-env.j2
+  dest=/opt/app/.env
+"
+
+# Restart application services
+ansible {{ region }}_app -m systemd -a "name=application state=restarted"
+```
+
+### Database Configuration
+```bash
+# Update database configuration
+ansible {{ region }}_db -m template -a "
+  src=mysql.cnf.j2
+  dest=/etc/mysql/mysql.conf.d/mysqld.cnf
+"
+
+ansible {{ region }}_db -m systemd -a "name=mysql state=restarted"
+```
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})

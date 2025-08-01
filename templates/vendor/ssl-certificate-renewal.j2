@@ -1,0 +1,64 @@
+{# METADATA:
+id: ssl-certificate-renewal
+name: SSL Certificate Renewal
+description: Renew and deploy SSL certificates across services
+estimated_duration: 25
+risk_level: high
+approval_required: true
+dependencies: []
+#}
+
+# SSL Certificate Renewal - {{ region.upper() }}
+
+## Overview
+
+SSL certificate renewal procedure for **{{ azure_region }}** region.
+
+### Certificate Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Environment**: {{ environment }}
+- **Certificate Authority**: Let's Encrypt / Azure Key Vault
+- **Domains**: {{ ssl_domains | default(['*.example.com', 'api.example.com']) | join(', ') }}
+
+## Certificate Management
+
+### Certificate Renewal
+```bash
+# Renew certificates using certbot
+ansible {{ region }}_web -m shell -a "certbot renew --dry-run"
+ansible {{ region }}_web -m shell -a "certbot renew --force-renewal"
+
+# Deploy certificates to load balancers
+ansible {{ region }}_lb -m copy -a "
+  src=/etc/letsencrypt/live/example.com/fullchain.pem
+  dest=/etc/nginx/ssl/
+"
+ansible {{ region }}_lb -m copy -a "
+  src=/etc/letsencrypt/live/example.com/privkey.pem
+  dest=/etc/nginx/ssl/
+"
+```
+
+### Service Restart
+```bash
+# Restart web services to pick up new certificates
+ansible {{ region }}_web -m systemd -a "name=nginx state=restarted"
+ansible {{ region }}_lb -m systemd -a "name=haproxy state=restarted"
+```
+
+### Certificate Validation
+```bash
+# Verify certificate validity
+ansible {{ region }}_web -m uri -a "
+  url=https://{{ ansible_fqdn }}
+  validate_certs=yes
+  return_content=no
+"
+```
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})

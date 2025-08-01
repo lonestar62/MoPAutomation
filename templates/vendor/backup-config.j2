@@ -1,0 +1,78 @@
+{# METADATA:
+id: backup-config
+name: Backup Configuration
+description: Configure automated backup systems and retention policies
+estimated_duration: 35
+risk_level: high
+approval_required: true
+dependencies: ["database-maintenance"]
+#}
+
+# Backup Configuration - {{ region.upper() }}
+
+## Overview
+
+Backup configuration procedure for **{{ azure_region }}** region.
+
+### Backup Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Environment**: {{ environment }}
+- **Backup Storage**: {{ 'backup-storage-' + region }}.blob.core.windows.net
+- **Retention Policy**: {{ backup_retention_days | default(30) }} days
+
+## Backup Components
+
+### Database Backups
+```bash
+# Configure automated database backups
+ansible {{ region }}_db -m cron -a "
+  name='Daily database backup'
+  minute=0
+  hour=2
+  job='mysqldump --all-databases | gzip > /backup/db-$(date +%Y%m%d).sql.gz'
+"
+
+# Configure Azure Blob storage sync
+ansible {{ region }}_db -m cron -a "
+  name='Sync backups to Azure'
+  minute=30
+  hour=3
+  job='az storage blob upload-batch --destination backups --source /backup/'
+"
+```
+
+### File System Backups
+```bash
+# System configuration backup
+ansible {{ region }}_all -m archive -a "
+  path=/etc
+  dest=/backup/system-config-$(date +%Y%m%d).tar.gz
+  format=gz
+"
+
+# Application data backup
+ansible {{ region }}_app -m archive -a "
+  path={{ app_data_path | default('/opt/app/data') }}
+  dest=/backup/app-data-$(date +%Y%m%d).tar.gz
+  format=gz
+"
+```
+
+## Retention Management
+
+### Cleanup Old Backups
+```bash
+# Remove backups older than retention period
+ansible {{ region }}_all -m find -a "
+  paths=/backup
+  age={{ backup_retention_days | default(30) }}d
+  file_type=file
+" | xargs rm -f
+```
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})

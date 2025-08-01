@@ -1,0 +1,61 @@
+{# METADATA:
+id: queue-management
+name: Queue Management
+description: Configure message queues and processing
+estimated_duration: 35
+risk_level: medium
+approval_required: false
+dependencies: []
+#}
+
+# Queue Management - {{ region.upper() }}
+
+## Overview
+
+Queue management procedure for **{{ azure_region }}** region.
+
+### Queue Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Queue System**: {{ queue_system | default('RabbitMQ') }}
+- **Queue Count**: {{ queue_count | default(5) }}
+
+## Queue Configuration
+
+### RabbitMQ Setup
+```bash
+# Configure RabbitMQ virtual hosts
+ansible {{ region }}_queue -m shell -a "
+  rabbitmqctl add_vhost {{ environment }}
+"
+
+# Create queues
+{% for queue in queues | default(['email', 'notification', 'processing', 'audit', 'backup']) %}
+ansible {{ region }}_queue -m shell -a "
+  rabbitmqctl declare queue {{ queue }}_{{ region }} durable=true
+"
+{% endfor %}
+
+# Configure queue policies
+ansible {{ region }}_queue -m shell -a "
+  rabbitmqctl set_policy ha-all '.*' '{\"ha-mode\":\"all\"}'
+"
+```
+
+### Worker Configuration
+```bash
+# Update worker configuration
+ansible {{ region }}_worker -m template -a "
+  src=worker-config.j2
+  dest=/opt/worker/config/worker.conf
+"
+
+# Restart worker services
+ansible {{ region }}_worker -m systemd -a "name=worker state=restarted"
+```
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})

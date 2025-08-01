@@ -1,0 +1,58 @@
+{# METADATA:
+id: api-gateway-config
+name: API Gateway Configuration
+description: Configure API gateway routing and policies
+estimated_duration: 35
+risk_level: medium
+approval_required: true
+dependencies: []
+#}
+
+# API Gateway Configuration - {{ region.upper() }}
+
+## Overview
+
+API gateway configuration procedure for **{{ azure_region }}** region.
+
+### API Gateway Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Gateway**: {{ 'apigw-' + region }}
+- **Version**: {{ api_version | default('v1') }}
+
+## Gateway Configuration
+
+### Route Configuration
+```bash
+# Configure API routes
+ansible {{ region }}_gateway -m template -a "
+  src=api-routes.conf.j2
+  dest=/etc/nginx/conf.d/api-routes.conf
+"
+
+# Configure rate limiting
+ansible {{ region }}_gateway -m template -a "
+  src=rate-limit.conf.j2
+  dest=/etc/nginx/conf.d/rate-limit.conf
+"
+```
+
+### Security Policies
+```bash
+# Configure CORS policies
+ansible {{ region }}_gateway -m blockinfile -a "
+  dest=/etc/nginx/conf.d/api-routes.conf
+  marker='# {mark} CORS CONFIGURATION'
+  block='
+    add_header Access-Control-Allow-Origin \"{{ cors_origin | default('*') }}\";
+    add_header Access-Control-Allow-Methods \"GET, POST, PUT, DELETE, OPTIONS\";
+    add_header Access-Control-Allow-Headers \"Authorization, Content-Type\";
+  '
+"
+```
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})

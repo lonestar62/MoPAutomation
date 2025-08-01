@@ -1,0 +1,65 @@
+{# METADATA:
+id: storage-config
+name: Storage Configuration
+description: Configure storage volumes and mounting
+estimated_duration: 40
+risk_level: medium
+approval_required: true
+dependencies: []
+#}
+
+# Storage Configuration - {{ region.upper() }}
+
+## Overview
+
+Storage configuration procedure for **{{ azure_region }}** region.
+
+### Storage Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Storage Account**: {{ 'storage' + region }}
+- **File System**: {{ storage_filesystem | default('ext4') }}
+
+## Storage Volume Configuration
+
+### Disk Mounting
+```bash
+# Create mount points
+ansible {{ region }}_all -m file -a "
+  path={{ mount_point | default('/opt/data') }}
+  state=directory
+  mode=0755
+"
+
+# Mount storage volumes
+ansible {{ region }}_all -m mount -a "
+  path={{ mount_point | default('/opt/data') }}
+  src=/dev/{{ storage_device | default('sdb1') }}
+  fstype={{ storage_filesystem | default('ext4') }}
+  state=mounted
+"
+
+# Update fstab for persistence
+ansible {{ region }}_all -m lineinfile -a "
+  dest=/etc/fstab
+  line='/dev/{{ storage_device | default('sdb1') }} {{ mount_point | default('/opt/data') }} {{ storage_filesystem | default('ext4') }} defaults 0 2'
+"
+```
+
+### Permissions Setup
+```bash
+# Set storage permissions
+ansible {{ region }}_all -m file -a "
+  path={{ mount_point | default('/opt/data') }}
+  owner={{ storage_owner | default('appuser') }}
+  group={{ storage_group | default('appgroup') }}
+  mode=0755
+  recurse=yes
+"
+```
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})

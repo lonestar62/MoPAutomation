@@ -1,0 +1,56 @@
+{# METADATA:
+id: dns-config
+name: DNS Configuration
+description: Update DNS records and configuration
+estimated_duration: 25
+risk_level: medium
+approval_required: true
+dependencies: []
+#}
+
+# DNS Configuration - {{ region.upper() }}
+
+## Overview
+
+DNS configuration procedure for **{{ azure_region }}** region.
+
+### DNS Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **DNS Provider**: {{ dns_provider | default('Azure DNS') }}
+- **Zone**: {{ dns_zone | default('example.com') }}
+
+## DNS Record Updates
+
+### A Records
+```bash
+# Update A records for web services
+az network dns record-set a add-record \
+  --resource-group {{ resource_group }} \
+  --zone-name {{ dns_zone | default('example.com') }} \
+  --record-set-name www-{{ region }} \
+  --ipv4-address {{ web_ip | default('10.0.1.10') }}
+
+# Update A records for API endpoints
+az network dns record-set a add-record \
+  --resource-group {{ resource_group }} \
+  --zone-name {{ dns_zone | default('example.com') }} \
+  --record-set-name api-{{ region }} \
+  --ipv4-address {{ api_ip | default('10.0.1.20') }}
+```
+
+### CNAME Records
+```bash
+# Update CNAME for regional services
+az network dns record-set cname set-record \
+  --resource-group {{ resource_group }} \
+  --zone-name {{ dns_zone | default('example.com') }} \
+  --record-set-name {{ region }}-service \
+  --cname {{ region }}.internal.example.com
+```
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})

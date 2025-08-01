@@ -1,0 +1,209 @@
+{# METADATA:
+id: performance-tuning
+name: Performance Tuning
+description: Optimize system and application performance parameters
+estimated_duration: 45
+risk_level: medium
+approval_required: true
+dependencies: ["monitoring-config"]
+#}
+
+# Performance Tuning - {{ region.upper() }}
+
+## Overview
+
+Performance tuning procedure for **{{ azure_region }}** region.
+
+### Performance Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Environment**: {{ environment }}
+- **Tuning Category**: {{ tuning_category | default('Database + Web + System') }}
+- **Performance Target**: {{ performance_target | default('20% improvement') }}
+
+## Database Performance Tuning
+
+### MySQL Configuration
+```bash
+# Optimize MySQL configuration
+ansible {{ region }}_db -m lineinfile -a "
+  dest=/etc/mysql/mysql.conf.d/mysqld.cnf
+  regexp='^innodb_buffer_pool_size'
+  line='innodb_buffer_pool_size = {{ db_buffer_pool_size | default('2G') }}'
+"
+
+ansible {{ region }}_db -m lineinfile -a "
+  dest=/etc/mysql/mysql.conf.d/mysqld.cnf
+  regexp='^max_connections'
+  line='max_connections = {{ db_max_connections | default(500) }}'
+"
+
+ansible {{ region }}_db -m lineinfile -a "
+  dest=/etc/mysql/mysql.conf.d/mysqld.cnf
+  regexp='^query_cache_size'
+  line='query_cache_size = {{ db_query_cache_size | default('256M') }}'
+"
+
+# Restart MySQL to apply changes
+ansible {{ region }}_db -m systemd -a "name=mysql state=restarted"
+```
+
+### Index Optimization
+```bash
+# Analyze and optimize database indexes
+ansible {{ region }}_db -m shell -a "
+mysql -e \"
+ANALYZE TABLE {{ critical_tables | default(['users', 'orders', 'products']) | join(', ') }};
+OPTIMIZE TABLE {{ critical_tables | default(['users', 'orders', 'products']) | join(', ') }};
+\"
+"
+```
+
+## Web Server Performance
+
+### Nginx Optimization
+```bash
+# Configure Nginx worker processes
+ansible {{ region }}_web -m lineinfile -a "
+  dest=/etc/nginx/nginx.conf
+  regexp='^worker_processes'
+  line='worker_processes {{ ansible_processor_vcpus }};'
+"
+
+# Configure connection limits
+ansible {{ region }}_web -m lineinfile -a "
+  dest=/etc/nginx/nginx.conf
+  regexp='worker_connections'
+  line='    worker_connections {{ nginx_worker_connections | default(4096) }};'
+"
+
+# Enable gzip compression
+ansible {{ region }}_web -m blockinfile -a "
+  dest=/etc/nginx/nginx.conf
+  marker='# {mark} GZIP CONFIGURATION'
+  block='
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/json application/javascript;
+  '
+"
+
+# Restart Nginx
+ansible {{ region }}_web -m systemd -a "name=nginx state=restarted"
+```
+
+## System Performance
+
+### Kernel Parameters
+```bash
+# Optimize network performance
+ansible {{ region }}_all -m sysctl -a "
+  name=net.core.rmem_max
+  value={{ net_rmem_max | default(134217728) }}
+  state=present
+  reload=yes
+"
+
+ansible {{ region }}_all -m sysctl -a "
+  name=net.core.wmem_max
+  value={{ net_wmem_max | default(134217728) }}
+  state=present
+  reload=yes
+"
+
+# Optimize file system performance
+ansible {{ region }}_all -m sysctl -a "
+  name=vm.dirty_ratio
+  value={{ vm_dirty_ratio | default(15) }}
+  state=present
+  reload=yes
+"
+
+ansible {{ region }}_all -m sysctl -a "
+  name=vm.dirty_background_ratio
+  value={{ vm_dirty_background_ratio | default(5) }}
+  state=present
+  reload=yes
+"
+```
+
+### Memory Management
+```bash
+# Configure swap usage
+ansible {{ region }}_all -m sysctl -a "
+  name=vm.swappiness
+  value={{ vm_swappiness | default(10) }}
+  state=present
+  reload=yes
+"
+
+# Optimize memory allocation
+ansible {{ region }}_all -m sysctl -a "
+  name=vm.overcommit_memory
+  value={{ vm_overcommit_memory | default(1) }}
+  state=present
+  reload=yes
+"
+```
+
+## Application Performance
+
+### JVM Tuning (if applicable)
+```bash
+{% if application_type | default('') == 'java' %}
+# Configure JVM heap size
+ansible {{ region }}_app -m lineinfile -a "
+  dest=/opt/app/bin/setenv.sh
+  regexp='^JAVA_OPTS'
+  line='JAVA_OPTS=\"-Xms{{ jvm_heap_min | default('2g') }} -Xmx{{ jvm_heap_max | default('4g') }} -XX:+UseG1GC\"'
+"
+
+# Configure garbage collection
+ansible {{ region }}_app -m lineinfile -a "
+  dest=/opt/app/bin/setenv.sh
+  regexp='^GC_OPTS'
+  line='GC_OPTS=\"-XX:MaxGCPauseMillis={{ gc_pause_target | default(200) }} -XX:G1HeapRegionSize={{ gc_region_size | default('16m') }}\"'
+"
+{% endif %}
+```
+
+### Connection Pooling
+```bash
+# Configure application connection pools
+ansible {{ region }}_app -m lineinfile -a "
+  dest=/opt/app/config/database.conf
+  regexp='^max_pool_size'
+  line='max_pool_size = {{ db_pool_size | default(50) }}'
+"
+
+ansible {{ region }}_app -m lineinfile -a "
+  dest=/opt/app/config/database.conf
+  regexp='^connection_timeout'
+  line='connection_timeout = {{ db_connection_timeout | default(30000) }}'
+"
+```
+
+## Performance Validation
+
+### Benchmark Tests
+```bash
+# Run performance benchmarks
+ansible {{ region }}_web -m shell -a "ab -n 1000 -c 10 http://localhost/"
+ansible {{ region }}_db -m shell -a "sysbench --test=oltp --mysql-table-engine=innodb prepare"
+ansible {{ region }}_db -m shell -a "sysbench --test=oltp --mysql-table-engine=innodb run"
+```
+
+### Monitoring Validation
+```bash
+# Check performance metrics
+ansible {{ region }}_all -m shell -a "top -bn1 | grep 'load average'"
+ansible {{ region }}_db -m shell -a "mysqladmin extended-status | grep -E 'Queries|Connections'"
+ansible {{ region }}_web -m shell -a "nginx -T | grep worker"
+```
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})

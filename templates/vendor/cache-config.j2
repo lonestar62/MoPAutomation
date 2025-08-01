@@ -1,0 +1,58 @@
+{# METADATA:
+id: cache-config
+name: Cache Configuration
+description: Configure Redis cache and caching policies
+estimated_duration: 30
+risk_level: low
+approval_required: false
+dependencies: []
+#}
+
+# Cache Configuration - {{ region.upper() }}
+
+## Overview
+
+Cache configuration procedure for **{{ azure_region }}** region.
+
+### Cache Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Cache Type**: {{ cache_type | default('Redis') }}
+- **Cache Size**: {{ cache_size | default('2GB') }}
+
+## Redis Configuration
+
+### Cache Setup
+```bash
+# Configure Redis memory settings
+ansible {{ region }}_cache -m lineinfile -a "
+  dest=/etc/redis/redis.conf
+  regexp='^maxmemory'
+  line='maxmemory {{ cache_size | default('2gb') }}'
+"
+
+# Configure eviction policy
+ansible {{ region }}_cache -m lineinfile -a "
+  dest=/etc/redis/redis.conf
+  regexp='^maxmemory-policy'
+  line='maxmemory-policy {{ eviction_policy | default('allkeys-lru') }}'
+"
+
+# Restart Redis
+ansible {{ region }}_cache -m systemd -a "name=redis state=restarted"
+```
+
+### Application Cache Integration
+```bash
+# Update application cache configuration
+ansible {{ region }}_app -m template -a "
+  src=cache-config.j2
+  dest=/opt/app/config/cache.conf
+"
+```
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})

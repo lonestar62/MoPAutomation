@@ -1,0 +1,77 @@
+{# METADATA:
+id: container-deployment
+name: Container Deployment
+description: Deploy and update containerized applications
+estimated_duration: 50
+risk_level: medium
+approval_required: true
+dependencies: []
+#}
+
+# Container Deployment - {{ region.upper() }}
+
+## Overview
+
+Container deployment procedure for **{{ azure_region }}** region.
+
+### Container Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Container Registry**: {{ container_registry | default('acr' + region + '.azurecr.io') }}
+- **Image Version**: {{ image_version | default('latest') }}
+
+## Container Deployment
+
+### Pull New Images
+```bash
+# Login to container registry
+ansible {{ region }}_app -m shell -a "
+  docker login {{ container_registry | default('acr' + region + '.azurecr.io') }} \
+  -u {{ registry_username }} \
+  -p {{ registry_password }}
+"
+
+# Pull latest images
+ansible {{ region }}_app -m docker_image -a "
+  name={{ container_registry | default('acr' + region + '.azurecr.io') }}/webapp:{{ image_version | default('latest') }}
+  source=pull
+  force_source=yes
+"
+```
+
+### Deploy Containers
+```bash
+# Stop existing containers
+ansible {{ region }}_app -m docker_container -a "
+  name=webapp
+  state=stopped
+"
+
+# Start new containers
+ansible {{ region }}_app -m docker_container -a "
+  name=webapp
+  image={{ container_registry | default('acr' + region + '.azurecr.io') }}/webapp:{{ image_version | default('latest') }}
+  state=started
+  restart_policy=always
+  ports=8080:80
+  env:
+    DATABASE_URL={{ database_url }}
+    API_KEY={{ api_key }}
+"
+```
+
+### Health Validation
+```bash
+# Check container health
+ansible {{ region }}_app -m uri -a "
+  url=http://localhost:8080/health
+  method=GET
+  status_code=200
+"
+```
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})

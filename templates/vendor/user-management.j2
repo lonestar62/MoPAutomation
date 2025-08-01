@@ -1,0 +1,168 @@
+{# METADATA:
+id: user-management
+name: User Management
+description: Manage user accounts and access permissions
+estimated_duration: 30
+risk_level: medium
+approval_required: true
+dependencies: []
+#}
+
+# User Management - {{ region.upper() }}
+
+## Overview
+
+User management procedure for **{{ azure_region }}** region.
+
+### User Management Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Environment**: {{ environment }}
+- **Directory Service**: {{ directory_service | default('Active Directory') }}
+- **User Groups**: {{ user_groups | default(['admin', 'developer', 'operator']) | join(', ') }}
+
+## User Account Management
+
+### Create Service Accounts
+```bash
+# Create monitoring service account
+ansible {{ region }}_all -m user -a "
+  name=monitoring
+  shell=/bin/bash
+  home=/opt/monitoring
+  system=yes
+  createhome=yes
+"
+
+# Create backup service account
+ansible {{ region }}_all -m user -a "
+  name=backup
+  shell=/bin/bash
+  home=/opt/backup
+  system=yes
+  createhome=yes
+"
+
+# Create application service account
+ansible {{ region }}_app -m user -a "
+  name=appuser
+  shell=/bin/bash
+  home=/opt/app
+  system=yes
+  createhome=yes
+"
+```
+
+### Configure SSH Keys
+```bash
+# Deploy SSH keys for service accounts
+ansible {{ region }}_all -m authorized_key -a "
+  user=monitoring
+  key='{{ monitoring_ssh_key }}'
+  state=present
+"
+
+ansible {{ region }}_all -m authorized_key -a "
+  user=backup
+  key='{{ backup_ssh_key }}'
+  state=present
+"
+```
+
+### User Group Management
+```bash
+# Create operational groups
+ansible {{ region }}_all -m group -a "name=operators state=present"
+ansible {{ region }}_all -m group -a "name=developers state=present"
+ansible {{ region }}_all -m group -a "name=dbadmins state=present"
+
+# Add users to appropriate groups
+{% for user in operational_users | default([]) %}
+ansible {{ region }}_all -m user -a "
+  name={{ user.name }}
+  groups={{ user.groups | join(',') }}
+  append=yes
+"
+{% endfor %}
+```
+
+## Access Control
+
+### Sudo Configuration
+```bash
+# Configure sudo access for operators
+ansible {{ region }}_all -m copy -a "
+  dest=/etc/sudoers.d/operators
+  content='%operators ALL=(ALL) NOPASSWD: /bin/systemctl, /usr/bin/docker'
+  mode=0440
+"
+
+# Configure sudo access for developers
+ansible {{ region }}_app -m copy -a "
+  dest=/etc/sudoers.d/developers
+  content='%developers ALL=(appuser) NOPASSWD: ALL'
+  mode=0440
+"
+```
+
+### File Permissions
+```bash
+# Set application directory permissions
+ansible {{ region }}_app -m file -a "
+  path=/opt/app
+  owner=appuser
+  group=developers
+  mode=0755
+  recurse=yes
+"
+
+# Set log directory permissions
+ansible {{ region }}_all -m file -a "
+  path=/var/log/application
+  owner=appuser
+  group=operators
+  mode=0750
+  state=directory
+"
+```
+
+## Security Hardening
+
+### Password Policies
+```bash
+# Configure password aging
+ansible {{ region }}_all -m lineinfile -a "
+  dest=/etc/login.defs
+  regexp='^PASS_MAX_DAYS'
+  line='PASS_MAX_DAYS {{ password_max_days | default(90) }}'
+"
+
+# Configure password complexity
+ansible {{ region }}_all -m lineinfile -a "
+  dest=/etc/security/pwquality.conf
+  regexp='^minlen'
+  line='minlen = {{ password_min_length | default(12) }}'
+"
+```
+
+### Account Lockout
+```bash
+# Configure account lockout policy
+ansible {{ region }}_all -m lineinfile -a "
+  dest=/etc/security/faillock.conf
+  regexp='^deny'
+  line='deny = {{ lockout_attempts | default(5) }}'
+"
+
+ansible {{ region }}_all -m lineinfile -a "
+  dest=/etc/security/faillock.conf
+  regexp='^unlock_time'
+  line='unlock_time = {{ lockout_duration | default(900) }}'
+"
+```
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})

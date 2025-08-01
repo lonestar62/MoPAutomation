@@ -1,0 +1,153 @@
+{# METADATA:
+id: firewall-rules-update
+name: Firewall Rules Update
+description: Update firewall rules and security policies
+estimated_duration: 50
+risk_level: high
+approval_required: true
+dependencies: ["network-security-config"]
+#}
+
+# Firewall Rules Update - {{ region.upper() }}
+
+## Overview
+
+Firewall rules update procedure for **{{ azure_region }}** region.
+
+### Security Context
+
+- **Target Region**: {{ region.upper() }} ({{ azure_region }})
+- **Environment**: {{ environment }}
+- **Firewall Type**: {{ firewall_type | default('iptables + Azure NSG') }}
+- **Rule Version**: {{ firewall_rule_version | default('2.1.0') }}
+
+## Firewall Rule Updates
+
+### Web Tier Rules
+```bash
+# Allow HTTP/HTTPS traffic
+ansible {{ region }}_web -m iptables -a "
+  chain=INPUT
+  protocol=tcp
+  destination_port=80
+  jump=ACCEPT
+  state=present
+"
+ansible {{ region }}_web -m iptables -a "
+  chain=INPUT
+  protocol=tcp
+  destination_port=443
+  jump=ACCEPT
+  state=present
+"
+
+# Block direct database access from web tier
+ansible {{ region }}_web -m iptables -a "
+  chain=OUTPUT
+  protocol=tcp
+  destination_port=3306
+  destination={{ db_subnet | default('10.0.2.0/24') }}
+  jump=REJECT
+  state=present
+"
+```
+
+### Database Tier Rules
+```bash
+# Allow database connections from app tier only
+ansible {{ region }}_db -m iptables -a "
+  chain=INPUT
+  protocol=tcp
+  source={{ app_subnet | default('10.0.1.0/24') }}
+  destination_port=3306
+  jump=ACCEPT
+  state=present
+"
+
+# Block all other database access
+ansible {{ region }}_db -m iptables -a "
+  chain=INPUT
+  protocol=tcp
+  destination_port=3306
+  jump=REJECT
+  state=present
+"
+```
+
+### Management Rules
+```bash
+# Allow SSH from management network only
+ansible {{ region }}_all -m iptables -a "
+  chain=INPUT
+  protocol=tcp
+  source={{ mgmt_subnet | default('10.0.100.0/24') }}
+  destination_port=22
+  jump=ACCEPT
+  state=present
+"
+
+# Block SSH from everywhere else
+ansible {{ region }}_all -m iptables -a "
+  chain=INPUT
+  protocol=tcp
+  destination_port=22
+  jump=REJECT
+  state=present
+"
+```
+
+## Azure NSG Updates
+
+### Network Security Group Rules
+```bash
+# Update Azure NSG rules
+az network nsg rule create \
+  --resource-group {{ resource_group }} \
+  --nsg-name {{ 'nsg-' + region }} \
+  --name AllowHTTPS \
+  --protocol Tcp \
+  --direction Inbound \
+  --priority 100 \
+  --source-address-prefixes Internet \
+  --destination-port-ranges 443 \
+  --access Allow
+
+# Update database access rules
+az network nsg rule create \
+  --resource-group {{ resource_group }} \
+  --nsg-name {{ 'nsg-db-' + region }} \
+  --name AllowAppTierDB \
+  --protocol Tcp \
+  --direction Inbound \
+  --priority 200 \
+  --source-address-prefixes {{ app_subnet | default('10.0.1.0/24') }} \
+  --destination-port-ranges 3306 \
+  --access Allow
+```
+
+## Validation and Testing
+
+### Rule Validation
+```bash
+# Test firewall rules
+ansible {{ region }}_web -m shell -a "iptables -L -n | grep -E '(ACCEPT|REJECT)'"
+ansible {{ region }}_db -m shell -a "iptables -L -n | grep 3306"
+
+# Test connectivity
+ansible {{ region }}_app -m shell -a "nc -zv {{ hostvars[groups[region + '_db'][0]]['ansible_default_ipv4']['address'] }} 3306"
+```
+
+### Security Compliance Check
+```bash
+# Verify no unauthorized ports are open
+ansible {{ region }}_all -m shell -a "netstat -tlnp | grep -v ':22\|:80\|:443\|:3306'"
+
+# Check for default deny rules
+ansible {{ region }}_all -m shell -a "iptables -L | grep 'policy DROP'"
+```
+
+---
+
+**Generated**: {{ generated_at }}  
+**Template**: {{ template_source }}  
+**Region**: {{ region.upper() }} ({{ azure_region }})
