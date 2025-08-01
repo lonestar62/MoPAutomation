@@ -34,6 +34,11 @@ def index():
         app.logger.error(f"Error loading dashboard: {e}")
         return render_template('index.html', mops=[], recent_executions=[], error=str(e))
 
+@app.route('/api-demo')
+def api_demo():
+    """Demo page showing Next.js integration readiness"""
+    return render_template('api_demo.html')
+
 @app.route('/mops')
 def list_mops():
     """List all available MOPs"""

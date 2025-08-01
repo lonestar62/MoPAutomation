@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Layout from '../components/Layout'
 import { DocumentTextIcon, XCircleIcon } from '@heroicons/react/24/outline'
 
@@ -139,7 +139,8 @@ export default function Home() {
                   Go to Admin Panel
                 </a>
               </div>
-            )}
+            </div>
+          )}
         </div>
       </div>
     </Layout>

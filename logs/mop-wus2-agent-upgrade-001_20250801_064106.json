@@ -1,0 +1,62 @@
+{
+  "execution_id": "mop-wus2-agent-upgrade-001_20250801_064106",
+  "mop_id": "mop-wus2-agent-upgrade-001",
+  "timestamp": "2025-08-01T06:41:06.426322",
+  "category": "agent-upgrade",
+  "playbooks": [
+    "edit_yaml.yml",
+    "commit_to_git.yml",
+    "run_manual_pipeline.yml"
+  ],
+  "success": false,
+  "results": [
+    {
+      "playbook": "edit_yaml.yml",
+      "success": true,
+      "return_code": 0,
+      "output": "\nPLAY [Edit YAML Configuration] ************************************************\n\nTASK [Backup existing configuration] *****************************************\nchanged: [localhost]\n\nTASK [Update YAML values] *****************************************************\nchanged: [localhost]\n\nTASK [Validate YAML syntax] **************************************************\nok: [localhost]\n\nPLAY RECAP ********************************************************************\nlocalhost : ok=3    changed=2    unreachable=0    failed=0\n",
+      "start_time": "2025-08-01T06:41:06.435741",
+      "end_time": "2025-08-01T06:41:07.577092",
+      "duration_seconds": 1.141351
+    },
+    {
+      "playbook": "commit_to_git.yml",
+      "success": false,
+      "return_code": 2,
+      "output": "\nPLAY [Commit to Git Repository] ***********************************************\n\nTASK [Git add changes] ********************************************************\nchanged: [localhost]\n\nTASK [Git commit] *************************************************************\nchanged: [localhost]\n\nTASK [Git push] ***************************************************************\nfailed: [localhost] => {\"msg\": \"Permission denied (publickey)\"}\n\nPLAY RECAP ********************************************************************\nlocalhost : ok=2    changed=2    unreachable=0    failed=1\n",
+      "start_time": "2025-08-01T06:41:07.577137",
+      "end_time": "2025-08-01T06:41:09.533220",
+      "duration_seconds": 1.956083
+    },
+    {
+      "playbook": "run_manual_pipeline.yml",
+      "success": true,
+      "return_code": 0,
+      "output": "\nPLAY [Trigger Azure DevOps Pipeline] *****************************************\n\nTASK [Get pipeline ID] ********************************************************\nok: [localhost]\n\nTASK [Trigger pipeline run] **************************************************\nchanged: [localhost]\n\nTASK [Wait for pipeline completion] ******************************************\nok: [localhost]\n\nPLAY RECAP ********************************************************************\nlocalhost : ok=3    changed=1    unreachable=0    failed=0\n",
+      "start_time": "2025-08-01T06:41:09.533248",
+      "end_time": "2025-08-01T06:41:11.160904",
+      "duration_seconds": 1.627656
+    }
+  ],
+  "variables": {
+    "id": "mop-wus2-agent-upgrade-001",
+    "title": "Upgrade Monitoring Agents - West US 2",
+    "category": "agent-upgrade",
+    "region": "westus2",
+    "agent_version": "v2.1.5",
+    "target_systems": "monitoring-agents",
+    "rollback_enabled": true,
+    "upgrade_strategy": "rolling",
+    "config_file": "config/monitoring-agents.yml",
+    "git_branch": "main",
+    "pipeline_duration": "20-35",
+    "change_ticket": "CHG-2024-001235",
+    "approval_reference": "Approved via ServiceNow",
+    "technical_contact": "Monitoring Team",
+    "playbooks": [
+      "edit_yaml.yml",
+      "commit_to_git.yml",
+      "run_manual_pipeline.yml"
+    ]
+  }
+}

@@ -1,6 +1,6 @@
+import React, { ReactNode } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { ReactNode } from 'react'
 import { CogIcon, DocumentTextIcon, HomeIcon } from '@heroicons/react/24/outline'
 
 interface LayoutProps {
